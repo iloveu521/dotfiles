@@ -31,6 +31,7 @@ return {
         cpp = { 'clang_format' },
         lua = { 'stylua' },
         cmake = { 'cmake_format' },
+        python = { 'ruff_format' },
       },
       formatters = { clang_format = { command = 'clang-format' } },
       format_on_save = function(bufnr)

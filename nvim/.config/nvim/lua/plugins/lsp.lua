@@ -13,7 +13,10 @@ return {
   {
     'WhoIsSethDaniel/mason-tool-installer.nvim',
     dependencies = { 'williamboman/mason.nvim' },
-    opts = { ensure_installed = { 'lua-language-server', 'stylua', 'codelldb' }, run_on_start = true },
+    opts = {
+      ensure_installed = { 'lua-language-server', 'stylua', 'codelldb', 'basedpyright', 'ruff' },
+      run_on_start = true,
+    },
   },
   { 'j-hui/fidget.nvim', event = 'LspAttach', opts = {} },
   {
@@ -47,7 +50,23 @@ return {
         capabilities = capabilities,
         settings = { Lua = { diagnostics = { globals = { 'vim' } }, workspace = { checkThirdParty = false } } },
       })
-      vim.lsp.enable({ 'clangd', 'lua_ls' })
+      vim.lsp.config('basedpyright', {
+        capabilities = capabilities,
+        settings = {
+          basedpyright = {
+            analysis = {
+              autoImportCompletions = true,
+              diagnosticMode = 'openFilesOnly',
+              typeCheckingMode = 'standard',
+            },
+          },
+        },
+      })
+      vim.lsp.config('ruff', {
+        capabilities = capabilities,
+        on_attach = function(client) client.server_capabilities.hoverProvider = false end,
+      })
+      vim.lsp.enable({ 'clangd', 'lua_ls', 'basedpyright', 'ruff' })
 
       vim.api.nvim_create_autocmd('LspAttach', { callback = lsp_mappings })
     end,
