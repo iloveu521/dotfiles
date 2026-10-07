@@ -4,7 +4,7 @@ cursor-theme='DMZ-Black'
 font-name='Noto Sans Brahmi 10'
 gtk-theme='Breeze'
 icon-theme='Reversal'
-monospace-font-name='Hack 10'
+monospace-font-name='Hack  10'
 text-scaling-factor=1.2500000000000002
 
 [org/gnome/desktop/wm/preferences]
