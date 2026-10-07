@@ -55,20 +55,32 @@ module_items() {
   esac
 }
 
+declare -A seen_modules
 for module in "${modules[@]}"; do
   module_items "$module" >/dev/null || {
     printf 'error: unknown module: %s\n' "$module" >&2
     exit 2
   }
+  [[ -z ${seen_modules[$module]:-} ]] || {
+    printf 'error: duplicate module: %s\n' "$module" >&2
+    exit 2
+  }
+  seen_modules["$module"]=1
 done
 
 # Build and validate the complete operation list before changing any target.
 declare -a sources destinations backup_paths actions
+declare -A seen_destinations
 for module in "${modules[@]}"; do
   while IFS= read -r relative; do
     source_path="$repo_root/$module/$relative"
     destination="$target_home/$relative"
     backup_path="$backup_root/$relative"
+    [[ -z ${seen_destinations[$destination]:-} ]] || {
+      printf 'error: multiple modules target the same path: %s\n' "$destination" >&2
+      exit 1
+    }
+    seen_destinations["$destination"]=1
     [[ -e $source_path || -L $source_path ]] || {
       printf 'error: module payload is missing: %s\n' "$source_path" >&2
       exit 1
@@ -125,6 +137,10 @@ for index in "${!sources[@]}"; do
     printf 'backup: %s -> %s\n' "$destination" "$backup_path"
     if ! $dry_run; then
       mkdir -p -- "$(dirname "$backup_path")"
+      [[ ! -e $backup_path && ! -L $backup_path ]] || {
+        printf 'error: backup target appeared during installation: %s\n' "$backup_path" >&2
+        exit 1
+      }
       mv -- "$destination" "$backup_path"
     fi
   fi
@@ -132,6 +148,10 @@ for index in "${!sources[@]}"; do
   printf 'link: %s -> %s\n' "$destination" "$source_path"
   if ! $dry_run; then
     mkdir -p -- "$(dirname "$destination")"
+    [[ ! -e $destination && ! -L $destination ]] || {
+      printf 'error: destination appeared during installation: %s\n' "$destination" >&2
+      exit 1
+    }
     ln -s -- "$source_path" "$destination"
   fi
 done

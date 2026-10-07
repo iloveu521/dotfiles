@@ -72,6 +72,31 @@ fi
 grep -Fqx 'original nvim' "$atomic_home/.config/nvim/init.lua"
 grep -Fqx 'original git' "$atomic_home/.gitconfig"
 
+# Repeated modules must fail before touching targets or creating backups.
+duplicate_git_home="$test_root/duplicate-git-home"
+duplicate_git_backup="$test_root/duplicate-git-backup"
+mkdir -p "$duplicate_git_home"
+printf 'original duplicate git\n' >"$duplicate_git_home/.gitconfig"
+if HOME="$duplicate_git_home" "$repo_root/install.sh" \
+  --backup-dir "$duplicate_git_backup" git git >/dev/null 2>&1; then
+  printf 'duplicate git module unexpectedly succeeded\n' >&2
+  exit 1
+fi
+grep -Fqx 'original duplicate git' "$duplicate_git_home/.gitconfig"
+[[ ! -e $duplicate_git_backup/.gitconfig && ! -L $duplicate_git_backup/.gitconfig ]]
+
+duplicate_vscode_home="$test_root/duplicate-vscode-home"
+duplicate_vscode_backup="$test_root/duplicate-vscode-backup"
+mkdir -p "$duplicate_vscode_home/.config/Code/User"
+printf 'original vscode\n' >"$duplicate_vscode_home/.config/Code/User/settings.json"
+if HOME="$duplicate_vscode_home" "$repo_root/install.sh" \
+  --backup-dir "$duplicate_vscode_backup" vscode vscode >/dev/null 2>&1; then
+  printf 'duplicate vscode module unexpectedly succeeded\n' >&2
+  exit 1
+fi
+grep -Fqx 'original vscode' "$duplicate_vscode_home/.config/Code/User/settings.json"
+[[ ! -e $duplicate_vscode_backup/.config/Code/User/settings.json ]]
+
 if find "$repo_root" -type f \( \
   -name 'state.vscdb*' -o -name '*.db' -o -name '*History*' -o \
   -name 'agent-sessions.code-workspace' -o -name 'credentials' \
@@ -104,6 +129,13 @@ if grep -Fq 'export PATH="$PATH:/opt/nvim-linux-x86_64/bin"' "$repo_root/zsh/.co
   printf 'optional Neovim path must be conditional\n' >&2
   exit 1
 fi
+zsh -fc '
+  unset ROS_DOMAIN_ID
+  source "$1"
+  [[ -z ${ROS_DOMAIN_ID+x} ]]
+  ROS_DISTRO_SETUP=/dev/null ROS_DOMAIN_ID_OVERRIDE=77 rosenv /tmp/no-overlay
+  [[ $ROS_DOMAIN_ID == 77 ]]
+' _ "$repo_root/zsh/.config/zsh/ros.zsh"
 
 allowed_gnome_sections='^\[(org/gnome/desktop/interface|org/gnome/desktop/wm/preferences|org/gnome/shell/extensions/blur-my-shell/applications)\]$'
 if grep '^\[' "$repo_root/gnome/settings.dconf" | grep -Ev "$allowed_gnome_sections" | grep -q .; then
