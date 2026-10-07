@@ -1,0 +1,23 @@
+[org/gnome/desktop/interface]
+color-scheme='default'
+cursor-theme='DMZ-Black'
+font-name='Noto Sans Brahmi 10'
+gtk-theme='Breeze'
+icon-theme='Reversal'
+monospace-font-name='Hack 10'
+text-scaling-factor=1.2500000000000002
+
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'
+focus-mode='click'
+theme='Adwaita'
+
+[org/gnome/shell/extensions/blur-my-shell/applications]
+blur=true
+brightness=0.71999999999999997
+color=(0.059999999999999998, 0.040000000000000001, 0.16, 0.10000000000000001)
+dynamic-opacity=false
+opacity=235
+pipeline='pipeline_default'
+sigma=22
+whitelist=['kitty']

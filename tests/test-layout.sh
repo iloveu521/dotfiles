@@ -21,6 +21,8 @@ required_files=(
   vscode/.config/Code/User/keybindings.json
   vscode/extensions.txt
   git/.gitconfig
+  gnome/settings.dconf
+  gnome/apply.sh
 )
 for required in "${required_files[@]}"; do
   [[ -f $repo_root/$required ]] || {
@@ -70,5 +72,17 @@ if rg -l --hidden -g '!.git/**' \
   printf 'likely credential found in repository\n' >&2
   exit 1
 fi
+
+allowed_gnome_sections='^\[(org/gnome/desktop/interface|org/gnome/desktop/wm/preferences|org/gnome/shell/extensions/blur-my-shell/applications)\]$'
+if grep '^\[' "$repo_root/gnome/settings.dconf" | grep -Ev "$allowed_gnome_sections" | grep -q .; then
+  printf 'unexpected GNOME dconf section found\n' >&2
+  exit 1
+fi
+
+gnome_dry_run=$("$repo_root/gnome/apply.sh" --dry-run)
+grep -Fq 'org/gnome/desktop/interface' <<<"$gnome_dry_run"
+grep -Fq 'blur-my-shell/applications' <<<"$gnome_dry_run"
+grep -Fq "whitelist=['kitty']" "$repo_root/gnome/settings.dconf"
+grep -Fq 'opacity=235' "$repo_root/gnome/settings.dconf"
 
 printf 'layout tests passed\n'
