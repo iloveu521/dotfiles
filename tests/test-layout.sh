@@ -6,10 +6,28 @@ test_root=$(mktemp -d)
 trap 'rm -rf -- "$test_root"' EXIT
 fake_home="$test_root/home"
 backup_root="$test_root/backups"
-mkdir -p "$fake_home/.config/nvim" "$repo_root/nvim/.config/nvim" "$repo_root/git"
+mkdir -p "$fake_home/.config/nvim"
 printf 'old\n' >"$fake_home/.config/nvim/old.lua"
-printf 'new\n' >"$repo_root/nvim/.config/nvim/init.lua"
-printf '[init]\n\tdefaultBranch = main\n' >"$repo_root/git/.gitconfig"
+
+required_files=(
+  nvim/.config/nvim/init.lua
+  nvim/.config/nvim/lazy-lock.json
+  kitty/.config/kitty/kitty.conf
+  zsh/.zshrc
+  zsh/.p10k.zsh
+  zsh/.config/shell/env.sh
+  zsh/.config/zsh/ros.zsh
+  vscode/.config/Code/User/settings.json
+  vscode/.config/Code/User/keybindings.json
+  vscode/extensions.txt
+  git/.gitconfig
+)
+for required in "${required_files[@]}"; do
+  [[ -f $repo_root/$required ]] || {
+    printf 'missing required file: %s\n' "$required" >&2
+    exit 1
+  }
+done
 
 assert_link() {
   local path=$1 expected=$2
@@ -30,12 +48,26 @@ HOME="$fake_home" "$repo_root/install.sh" --backup-dir "$backup_root" nvim git
 [[ $(find "$backup_root" -type f | wc -l) -eq 1 ]]
 
 # Installing selected modules leaves other modules untouched.
-mkdir -p "$repo_root/kitty/.config/kitty"
-printf 'font_size 14\n' >"$repo_root/kitty/.config/kitty/kitty.conf"
 [[ ! -e $fake_home/.config/kitty/kitty.conf ]]
 
 if HOME="$fake_home" "$repo_root/install.sh" does-not-exist >/dev/null 2>&1; then
   printf 'unknown module unexpectedly succeeded\n' >&2
+  exit 1
+fi
+
+if find "$repo_root" -type f \( \
+  -name 'state.vscdb*' -o -name '*.db' -o -name '*History*' -o \
+  -name 'agent-sessions.code-workspace' -o -name 'credentials' \
+\) -print -quit | grep -q .; then
+  printf 'private machine state found in repository\n' >&2
+  exit 1
+fi
+
+if rg -l --hidden -g '!.git/**' \
+  '(github_pat_|ghp_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY)' \
+  "$repo_root/nvim" "$repo_root/kitty" "$repo_root/zsh" \
+  "$repo_root/vscode" "$repo_root/git" | grep -q .; then
+  printf 'likely credential found in repository\n' >&2
   exit 1
 fi
 

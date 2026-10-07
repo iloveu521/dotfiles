@@ -1,0 +1,6 @@
+require('core.options').setup()
+require('core.autocmds').setup()
+require('core.keymaps').setup()
+require('core.project').setup()
+require('core.terminal').setup()
+require('core.lazy').setup()
