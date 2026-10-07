@@ -12,4 +12,6 @@ function rosenv() {
   if [[ -r "$workspace/install/setup.zsh" ]]; then
     source "$workspace/install/setup.zsh" || return
   fi
+
+  export ROS_DOMAIN_ID="${ROS_DOMAIN_ID_OVERRIDE:-${ROS_DOMAIN_ID:-42}}"
 }

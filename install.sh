@@ -32,6 +32,10 @@ done
 if [[ -z $backup_root ]]; then
   backup_root="$target_home/.local/state/dotfiles-backups/$(date +%Y%m%d-%H%M%S)"
 fi
+[[ $backup_root == /* && $backup_root != / ]] || {
+  printf 'error: backup directory must be an absolute, non-root path\n' >&2
+  exit 2
+}
 
 all_modules=(nvim kitty zsh vscode git)
 if (($#)); then
@@ -58,29 +62,69 @@ for module in "${modules[@]}"; do
   }
 done
 
-link_item() {
-  local module=$1 relative=$2
-  local source_path="$repo_root/$module/$relative"
-  local destination="$target_home/$relative"
-  local backup_path="$backup_root/$relative"
+# Build and validate the complete operation list before changing any target.
+declare -a sources destinations backup_paths actions
+for module in "${modules[@]}"; do
+  while IFS= read -r relative; do
+    source_path="$repo_root/$module/$relative"
+    destination="$target_home/$relative"
+    backup_path="$backup_root/$relative"
+    [[ -e $source_path || -L $source_path ]] || {
+      printf 'error: module payload is missing: %s\n' "$source_path" >&2
+      exit 1
+    }
 
-  [[ -e $source_path || -L $source_path ]] || {
-    printf 'error: module payload is missing: %s\n' "$source_path" >&2
-    exit 1
-  }
-  if [[ -L $destination && $(readlink -f -- "$destination") == $(readlink -f -- "$source_path") ]]; then
-    printf 'ok: %s\n' "$destination"
-    return
-  fi
-
-  if [[ -e $destination || -L $destination ]]; then
-    printf 'backup: %s -> %s\n' "$destination" "$backup_path"
-    if ! $dry_run; then
-      mkdir -p -- "$(dirname "$backup_path")"
+    action=link
+    if [[ -L $destination && $(readlink -f -- "$destination") == $(readlink -f -- "$source_path") ]]; then
+      action=skip
+    elif [[ -e $destination || -L $destination ]]; then
       [[ ! -e $backup_path && ! -L $backup_path ]] || {
         printf 'error: backup target already exists: %s\n' "$backup_path" >&2
         exit 1
       }
+      action=backup-link
+    fi
+
+    sources+=("$source_path")
+    destinations+=("$destination")
+    backup_paths+=("$backup_path")
+    actions+=("$action")
+  done < <(module_items "$module")
+done
+
+assert_writable_parent() {
+  local candidate=$1
+  while [[ ! -e $candidate && ! -L $candidate ]]; do
+    candidate=$(dirname "$candidate")
+  done
+  [[ -d $candidate && -w $candidate ]] || {
+    printf 'error: parent path is not a writable directory: %s\n' "$candidate" >&2
+    exit 1
+  }
+}
+
+for index in "${!destinations[@]}"; do
+  [[ ${actions[$index]} == skip ]] && continue
+  assert_writable_parent "$(dirname "${destinations[$index]}")"
+  if [[ ${actions[$index]} == backup-link ]]; then
+    assert_writable_parent "$(dirname "${backup_paths[$index]}")"
+  fi
+done
+
+for index in "${!sources[@]}"; do
+  source_path=${sources[$index]}
+  destination=${destinations[$index]}
+  backup_path=${backup_paths[$index]}
+  action=${actions[$index]}
+
+  if [[ $action == skip ]]; then
+    printf 'ok: %s\n' "$destination"
+    continue
+  fi
+  if [[ $action == backup-link ]]; then
+    printf 'backup: %s -> %s\n' "$destination" "$backup_path"
+    if ! $dry_run; then
+      mkdir -p -- "$(dirname "$backup_path")"
       mv -- "$destination" "$backup_path"
     fi
   fi
@@ -90,10 +134,4 @@ link_item() {
     mkdir -p -- "$(dirname "$destination")"
     ln -s -- "$source_path" "$destination"
   fi
-}
-
-for module in "${modules[@]}"; do
-  while IFS= read -r relative; do
-    link_item "$module" "$relative"
-  done < <(module_items "$module")
 done

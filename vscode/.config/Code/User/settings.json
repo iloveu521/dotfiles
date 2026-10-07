@@ -75,9 +75,6 @@
         "workbench.editor.chatSession": true,
         "agentSessionsWelcomePage": true
     },
-    "vscode_custom_css.imports": [
-        "file:///home/gelpup/.vscode/extensions/brandonkirbyson.vscode-animations-2.0.8/dist/updateHandler.js"
-    ],
     "workbench.iconTheme": "vscode-celestial-magic-girl-icon-theme",
     "workbench.productIconTheme": "Default",
     "workbench.commandPalette.experimental.suggestCommands": true,
