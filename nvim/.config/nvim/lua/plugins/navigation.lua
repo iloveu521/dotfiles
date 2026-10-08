@@ -20,10 +20,10 @@ return {
       { '<leader>ff', project_picker('find_files', { hidden = true }), desc = 'Find project files' },
       { '<leader>fg', project_picker('live_grep'), desc = 'Grep project' },
       { '<leader>fr', project_picker('oldfiles', { only_cwd = true }), desc = 'Recent project files' },
-      { '<leader>fb', '<Cmd>Telescope buffers sort_mru=true ignore_current_buffer=true<CR>', desc = 'Find buffers' },
+      { '<leader>fb', '<Cmd>Telescope buffers sort_mru=true<CR>', desc = 'Find buffers' },
       { '<leader>fh', '<Cmd>Telescope help_tags<CR>', desc = 'Help tags' },
       { '<leader>fc', '<Cmd>Telescope commands<CR>', desc = 'Commands' },
-      { '<leader>bb', '<Cmd>Telescope buffers sort_mru=true ignore_current_buffer=true<CR>', desc = 'Switch buffer' },
+      { '<leader>bb', '<Cmd>Telescope buffers sort_mru=true<CR>', desc = 'Switch buffer' },
     },
     opts = {
       defaults = {
@@ -31,6 +31,22 @@ return {
         layout_strategy = 'horizontal',
         sorting_strategy = 'ascending',
         layout_config = { prompt_position = 'top', width = 0.9, height = 0.85 },
+        mappings = {
+          i = {
+            ['<M-i>'] = function(prompt_bufnr)
+              require('telescope.actions').move_selection_previous(prompt_bufnr)
+            end,
+            ['<M-k>'] = function(prompt_bufnr)
+              require('telescope.actions').move_selection_next(prompt_bufnr)
+            end,
+            ['<M-j>'] = function(prompt_bufnr)
+              require('telescope.actions').preview_scrolling_up(prompt_bufnr)
+            end,
+            ['<M-l>'] = function(prompt_bufnr)
+              require('telescope.actions').preview_scrolling_down(prompt_bufnr)
+            end,
+          },
+        },
       },
       extensions = { fzf = { fuzzy = true, override_generic_sorter = true, override_file_sorter = true } },
     },

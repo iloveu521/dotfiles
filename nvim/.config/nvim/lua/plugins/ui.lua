@@ -97,7 +97,15 @@ return {
     version = '*',
     event = 'VeryLazy',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
-    opts = { options = { diagnostics = 'nvim_lsp', separator_style = 'slant' } },
+    opts = {
+      options = {
+        diagnostics = 'nvim_lsp',
+        separator_style = 'thin',
+        indicator = { style = 'underline' },
+        show_buffer_close_icons = false,
+        show_close_icon = false,
+      },
+    },
   },
   {
     'folke/which-key.nvim',
