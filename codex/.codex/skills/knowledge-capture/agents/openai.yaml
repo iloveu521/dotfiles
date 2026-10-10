@@ -1,0 +1,7 @@
+interface:
+  display_name: "Knowledge Capture"
+  short_description: "Save reusable fixes as blog drafts"
+  default_prompt: "Use $knowledge-capture to save this verified lesson as a blog draft."
+
+policy:
+  allow_implicit_invocation: false

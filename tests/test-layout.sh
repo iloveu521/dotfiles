@@ -22,6 +22,10 @@ required_files=(
   vscode/.config/Code/User/keybindings.json
   vscode/extensions.txt
   git/.gitconfig
+  codex/.codex/AGENTS.md
+  codex/.codex/skills/knowledge-capture/SKILL.md
+  codex/.codex/skills/knowledge-capture/agents/openai.yaml
+  codex/workspace/blog/hugo/dev/AGENTS.md
   gnome/settings.dconf
   gnome/apply.sh
 )
@@ -107,6 +111,19 @@ assert_link "$fake_home/.config/nvim" "$repo_root/nvim/.config/nvim"
 assert_link "$fake_home/.gitconfig" "$repo_root/git/.gitconfig"
 [[ -f $backup_root/.config/nvim/old.lua ]]
 
+codex_home="$test_root/codex-home"
+codex_backup="$test_root/codex-backup"
+HOME="$codex_home" "$repo_root/install.sh" --backup-dir "$codex_backup" codex
+for relative in \
+  .codex/AGENTS.md \
+  .codex/skills/knowledge-capture/SKILL.md \
+  .codex/skills/knowledge-capture/agents/openai.yaml \
+  workspace/blog/hugo/dev/AGENTS.md; do
+  assert_link "$codex_home/$relative" "$repo_root/codex/$relative"
+done
+HOME="$codex_home" "$repo_root/install.sh" --backup-dir "$codex_backup" codex
+[[ ! -e $codex_backup/.codex/AGENTS.md && ! -L $codex_backup/.codex/AGENTS.md ]]
+
 # Re-running is idempotent and does not create another backup.
 HOME="$fake_home" "$repo_root/install.sh" --backup-dir "$backup_root" nvim git
 [[ $(find "$backup_root" -type f | wc -l) -eq 1 ]]
@@ -170,14 +187,14 @@ fi
 if rg -l --hidden -g '!.git/**' \
   '(github_pat_|ghp_[A-Za-z0-9]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|AKIA[0-9A-Z]{16}|npm_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{20,}|BEGIN [A-Z ]*PRIVATE KEY)' \
   "$repo_root/nvim" "$repo_root/kitty" "$repo_root/zsh" \
-  "$repo_root/vscode" "$repo_root/git" | grep -q .; then
+  "$repo_root/vscode" "$repo_root/git" "$repo_root/codex" | grep -q .; then
   printf 'likely credential found in repository\n' >&2
   exit 1
 fi
 
 if rg -n '/home/[A-Za-z0-9._-]+/' \
   "$repo_root/nvim" "$repo_root/kitty" "$repo_root/zsh" \
-  "$repo_root/vscode" "$repo_root/git" >/dev/null; then
+  "$repo_root/vscode" "$repo_root/git" "$repo_root/codex" >/dev/null; then
   printf 'machine-specific home path found in portable modules\n' >&2
   exit 1
 fi

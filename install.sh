@@ -8,7 +8,7 @@ dry_run=false
 
 usage() {
   printf 'Usage: %s [--dry-run] [--backup-dir PATH] [MODULE ...]\n' "${0##*/}"
-  printf 'Modules: nvim kitty zsh vscode git\n'
+  printf 'Modules: nvim kitty zsh vscode git codex\n'
 }
 
 while (($#)); do
@@ -37,7 +37,7 @@ fi
   exit 2
 }
 
-all_modules=(nvim kitty zsh vscode git)
+all_modules=(nvim kitty zsh vscode git codex)
 if (($#)); then
   modules=("$@")
 else
@@ -51,6 +51,13 @@ module_items() {
     zsh) printf '%s\n' '.zshrc' '.p10k.zsh' '.config/shell' '.config/zsh' ;;
     vscode) printf '%s\n' '.config/Code/User/settings.json' '.config/Code/User/keybindings.json' ;;
     git) printf '%s\n' '.gitconfig' ;;
+    codex)
+      printf '%s\n' \
+        '.codex/AGENTS.md' \
+        '.codex/skills/knowledge-capture/SKILL.md' \
+        '.codex/skills/knowledge-capture/agents/openai.yaml' \
+        'workspace/blog/hugo/dev/AGENTS.md'
+      ;;
     *) return 1 ;;
   esac
 }
