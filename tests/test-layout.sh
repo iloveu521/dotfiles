@@ -13,6 +13,7 @@ required_files=(
   nvim/.config/nvim/init.lua
   nvim/.config/nvim/lazy-lock.json
   kitty/.config/kitty/kitty.conf
+  kitty/.config/kitty/toggle_decorations.py
   zsh/.zshrc
   zsh/.p10k.zsh
   zsh/.config/shell/env.sh
@@ -30,6 +31,67 @@ for required in "${required_files[@]}"; do
     exit 1
   }
 done
+
+# Kitty must resolve the requested function keys to their intended actions.
+KITTY_CONFIG_UNDER_TEST="$repo_root/kitty/.config/kitty/kitty.conf" kitty +runpy '
+import os
+import runpy
+from kitty.config import load_config
+from kitty.fast_data_types import set_options
+from kitty.options.utils import parse_shortcut
+
+opts = load_config(os.environ["KITTY_CONFIG_UNDER_TEST"])
+if not opts.remember_window_size:
+    raise SystemExit("Kitty must remember the window size")
+if opts.initial_window_width != (216, "cells") or opts.initial_window_height != (55, "cells"):
+    raise SystemExit("Kitty initial window size must be 216x55 cells")
+right_click_actions = {
+    event.grabbed: action
+    for event, action in opts.mousemap.items()
+    if event.button == 1 and event.mods == 0 and event.repeat_count == -2
+}
+if right_click_actions != {False: "paste_from_clipboard", True: "paste_from_clipboard"}:
+    raise SystemExit("Kitty right-click must paste from the clipboard")
+keymap = opts.keyboard_modes[""].keymap
+expected = {
+    "f1": "toggle_maximized",
+    "f2": "kitten toggle_decorations.py",
+    "f3": "new_tab_with_cwd",
+}
+for shortcut, action in expected.items():
+    definitions = keymap.get(parse_shortcut(shortcut), ())
+    found = False
+    for definition in definitions:
+        if definition.definition == action:
+            found = True
+            break
+    if not found:
+        raise SystemExit(f"missing Kitty mapping: {shortcut} -> {action}")
+
+# The no-UI kitten must alternate between hiding and showing OS decorations.
+toggle = runpy.run_path(
+    os.path.join(os.path.dirname(os.environ["KITTY_CONFIG_UNDER_TEST"]), "toggle_decorations.py")
+)["handle_result"]
+
+class Boss:
+    def __init__(self):
+        self.calls = []
+
+    def load_config_file(self, *args, **kwargs):
+        self.calls.append((args, kwargs))
+
+boss = Boss()
+set_options(opts, True)
+toggle(("toggle_decorations.py",), {}, 1, boss)
+if boss.calls[-1][1]["overrides"] != ("hide_window_decorations yes",):
+    raise SystemExit("decoration toggle did not hide a visible title bar")
+
+opts.hide_window_decorations = 1
+set_options(opts, True)
+toggle(("toggle_decorations.py",), {}, 1, boss)
+if boss.calls[-1][1]["overrides"] != ("hide_window_decorations no",):
+    raise SystemExit("decoration toggle did not show a hidden title bar")
+'
 
 assert_link() {
   local path=$1 expected=$2
@@ -137,7 +199,14 @@ zsh -fc '
   [[ $ROS_DOMAIN_ID == 77 ]]
 ' _ "$repo_root/zsh/.config/zsh/ros.zsh"
 
-allowed_gnome_sections='^\[(org/gnome/desktop/interface|org/gnome/desktop/wm/preferences|org/gnome/shell/extensions/blur-my-shell/applications)\]$'
+ROS_ROOT="$repo_root/tests/fixtures/ros/ros" ROS_DISTRO=jazzy zsh -fc '
+  source "$1"
+  rosenv /tmp/no-overlay
+  [[ $ROS_DISTRO == humble ]]
+  [[ $ROS_VERSION == 2 ]]
+' _ "$repo_root/zsh/.config/zsh/ros.zsh"
+
+allowed_gnome_sections='^\[(org/gnome/desktop/interface|org/gnome/desktop/wm/preferences|org/gnome/mutter|org/gnome/desktop/wm/keybindings|org/gnome/shell/extensions/blur-my-shell/applications)\]$'
 if grep '^\[' "$repo_root/gnome/settings.dconf" | grep -Ev "$allowed_gnome_sections" | grep -q .; then
   printf 'unexpected GNOME dconf section found\n' >&2
   exit 1
@@ -146,6 +215,10 @@ fi
 gnome_dry_run=$("$repo_root/gnome/apply.sh" --dry-run)
 grep -Fq 'org/gnome/desktop/interface' <<<"$gnome_dry_run"
 grep -Fq 'blur-my-shell/applications' <<<"$gnome_dry_run"
+grep -Fq 'org/gnome/mutter' <<<"$gnome_dry_run"
+grep -Fq 'auto-maximize=false' <<<"$gnome_dry_run"
+grep -Fq 'org/gnome/desktop/wm/keybindings' <<<"$gnome_dry_run"
+grep -Fq "minimize=['F4', '<Super>h']" <<<"$gnome_dry_run"
 grep -Fq "whitelist=['kitty']" "$repo_root/gnome/settings.dconf"
 grep -Fq 'opacity=235' "$repo_root/gnome/settings.dconf"
 

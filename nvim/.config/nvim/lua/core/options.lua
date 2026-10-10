@@ -29,7 +29,7 @@ function M.setup()
   -- 界面响应与布局：符号列、刷新频率、映射等待、分屏方向、颜色与光标行。
   opt.signcolumn = 'yes'     -- 始终预留符号列，诊断/断点图标出现时整屏不会左右抖动
   opt.updatetime = 250       -- 空闲 250ms 就触发 CursorHold，诊断浮窗和 git 标记更及时
-  opt.timeoutlen = 400       -- 多键映射的等待上限，400ms 兼顾手感与 which-key 弹窗
+  opt.timeoutlen = 300       -- 多键映射最多等待 300ms，leader 组合键响应更利落
   opt.splitright = true      -- :vsplit 新窗口开在右侧，符合从左到右的阅读顺序
   opt.splitbelow = true      -- :split 新窗口开在下方
   opt.termguicolors = true   -- 启用 24 位真彩色，主题才能按 hex 值精确渲染
@@ -42,6 +42,11 @@ function M.setup()
   opt.tabstop = 2            -- 屏幕上把一个制表符按 2 列宽度显示
   opt.softtabstop = 2        -- 插入模式下按 Tab 等价于 2 个空格
   opt.smartindent = true     -- 新行按语法自动增加缩进，删掉行首缩进时也会退回
+  opt.breakindent = true     -- 折行后的文本沿用原行缩进，阅读 Markdown 与长注释时层级更清楚
+  -- 临时文件：不生成备份、写入备份或交换文件；持久撤销仍由 undofile 独立保留。
+  opt.backup = false         -- 保存前不额外创建同目录备份文件
+  opt.writebackup = false    -- 写入期间不创建临时备份副本
+  opt.swapfile = false       -- 不为缓冲区创建 .swp 交换文件
   -- 折行与补全：长行不折行，补全菜单始终显示且不预选。
   opt.wrap = false           -- 不折行显示，超出窗口宽度的部分靠水平滚动查看
   opt.completeopt = { 'menu', 'menuone', 'noselect' } -- 补全菜单：总弹出、单个候选也弹出、不预选以免回车误插入

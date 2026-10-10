@@ -12,6 +12,13 @@ button-layout='appmenu:minimize,maximize,close'
 focus-mode='click'
 theme='Adwaita'
 
+[org/gnome/mutter]
+auto-maximize=false
+center-new-windows=true
+
+[org/gnome/desktop/wm/keybindings]
+minimize=['F4', '<Super>h']
+
 [org/gnome/shell/extensions/blur-my-shell/applications]
 blur=true
 brightness=0.71999999999999997

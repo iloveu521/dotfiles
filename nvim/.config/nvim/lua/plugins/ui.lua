@@ -33,6 +33,35 @@ local function project_label()
   return string.format('%s %s', icons[context.kind] or '󰘬', name)
 end
 
+-- 宽窗口显示完整状态信息；小于等于 100 列时隐藏次要项并缩短模式名。
+local function statusline_is_wide()
+  return vim.fn.winwidth(0) > 100
+end
+
+local statusline_mode = {
+  'mode',
+  fmt = function(mode)
+    return string.format(' %s', statusline_is_wide() and mode or mode:sub(1, 1))
+  end,
+}
+
+local statusline_diagnostics = {
+  'diagnostics',
+  sources = { 'nvim_diagnostic' },
+  sections = { 'error', 'warn' },
+  symbols = { error = ' ', warn = ' ', info = ' ', hint = ' ' },
+  colored = false,
+  update_in_insert = false,
+  cond = statusline_is_wide,
+}
+
+local statusline_diff = {
+  'diff',
+  symbols = { added = ' ', modified = ' ', removed = ' ' },
+  colored = false,
+  cond = statusline_is_wide,
+}
+
 -- 以下是本模块的插件 spec 列表，交给 lazy.nvim 调度。
 return {
   -- 配色主题：统一界面配色，并作为 lualine/bufferline 等插件的主题来源。
@@ -146,25 +175,38 @@ return {
         theme = 'catppuccin-mocha',
         -- 所有窗口共用底部一条状态栏，分屏时不再各自重复。
         globalstatus = true,
-        -- 段内组件之间用细竖线分隔。
-        component_separators = { left = '│', right = '│' },
-        -- 段之间用圆角三角块分隔，形成分块视觉（需字体支持这些图形字符）。
-        section_separators = { left = '', right = '' },
+        -- 参考配置的斜切 Nerd Font 分隔符；比实心圆角占用更小。
+        component_separators = { left = '', right = '' },
+        section_separators = { left = '', right = '' },
+        -- 文件树自身已有路径与状态信息，不再重复绘制底部状态栏。
+        disabled_filetypes = { 'neo-tree' },
       },
       sections = {
-        -- lualine_a（最左）：当前模式，如 NORMAL / INSERT / VISUAL。
-        lualine_a = { 'mode' },
-        -- lualine_b：Git 分支、本缓冲区相对 HEAD 的增删、诊断计数。
-        lualine_b = { 'branch', 'diff', 'diagnostics' },
+        -- 模式在宽屏显示全名，窄屏只显示首字母。
+        lualine_a = { statusline_mode },
+        lualine_b = { 'branch' },
         -- lualine_c：文件名；path = 1 表示显示相对当前工作目录的路径层级。
         lualine_c = { { 'filename', path = 1 } },
-        -- lualine_x：自定义项目组件（图标 + 项目/包名），其后是文件编码与文件类型；
-        -- _project_component 是本配置自用的标记字段，lualine 会忽略未知键。
-        lualine_x = { { project_label, _project_component = true }, 'encoding', 'filetype' },
+        -- 项目、诊断、diff、编码和文件类型属于辅助信息，窄窗口自动收起。
+        lualine_x = {
+          { project_label, _project_component = true, cond = statusline_is_wide },
+          statusline_diagnostics,
+          statusline_diff,
+          { 'encoding', cond = statusline_is_wide },
+          { 'filetype', cond = statusline_is_wide },
+        },
         -- lualine_y：光标在文件中的百分比位置。
         lualine_y = { 'progress' },
         -- lualine_z（最右）：行列号。
         lualine_z = { 'location' },
+      },
+      inactive_sections = {
+        lualine_a = {},
+        lualine_b = {},
+        lualine_c = { { 'filename', path = 1 } },
+        lualine_x = { { 'location', padding = 0 } },
+        lualine_y = {},
+        lualine_z = {},
       },
     },
   },

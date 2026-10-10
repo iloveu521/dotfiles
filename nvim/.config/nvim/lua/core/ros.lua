@@ -1,5 +1,5 @@
 --[[
-lua/core/ros.lua — ROS 2 (Jazzy) 项目支持：环境脚本、colcon 动作、编译库刷新与缓冲区快捷键。
+lua/core/ros.lua — ROS 2 项目支持：环境脚本、colcon 动作、编译库刷新与缓冲区快捷键。
 
 职责与地位：
   * 本模块是 core 层中唯一了解 ROS 领域的部分，向上只暴露“纯函数式”的入口：
@@ -23,8 +23,37 @@ local setup_complete = false
 
 -- 判断路径是否为已存在的普通文件（目录不算）；参数 path 为字符串，返回 boolean。
 local function is_file(path)
+  if type(path) ~= 'string' or path == '' then return false end
   local stat = vim.uv.fs_stat(path)
   return stat and stat.type == 'file'
+end
+
+-- 根据 ROS_DISTRO、Ubuntu 版本和 /opt/ros 下的实际安装情况定位底座 setup.zsh。
+-- 参数 root：ROS 安装根目录，默认 /opt/ros；找不到唯一候选时返回 nil。
+local function distro_setup(root)
+  local distro = vim.env.ROS_DISTRO
+  if distro and distro ~= '' then
+    local configured = root .. '/' .. distro .. '/setup.zsh'
+    if is_file(configured) then return configured end
+  end
+
+  local version
+  local ok_read, lines = pcall(vim.fn.readfile, '/etc/os-release')
+  if ok_read then
+    for _, line in ipairs(lines) do
+      local value = line:match('^VERSION_ID="?([^" ]+)"?$')
+      if value then version = value break end
+    end
+  end
+  local expected = ({ ['24.04'] = 'jazzy', ['22.04'] = 'humble', ['20.04'] = 'foxy' })[version]
+  if expected then
+    local mapped = root .. '/' .. expected .. '/setup.zsh'
+    if is_file(mapped) then return mapped end
+  end
+
+  local candidates = vim.fn.glob(root .. '/*/setup.zsh', false, true)
+  if #candidates == 1 then return candidates[1] end
+  return nil
 end
 
 -- 校验 compile_commands.json 是否真的可用，而不仅仅是“文件存在”。
@@ -56,12 +85,14 @@ end
 
 -- 推导 ROS 环境脚本列表，顺序即 source 顺序（先发行版底座，再本工作空间 overlay）。
 -- 参数 context：项目上下文，非 ROS 时返回空表。返回 { string, ... }。
--- 底座固定为 Jazzy 的 setup.zsh（本配置 shell 为 zsh）；overlay 取 <root>/install/setup.zsh，
+-- 底座按当前环境自动发现（本配置 shell 为 zsh）；overlay 取 <root>/install/setup.zsh，
 -- 两者都只在文件真实存在时才纳入，避免 source 报错中断后续命令。
 function M.environment_scripts(context)
   if not is_ros(context) then return {} end
   local result = {}
-  local base = '/opt/ros/jazzy/setup.zsh'
+  local root = vim.env.ROS_ROOT
+  if not root or root == '' then root = '/opt/ros' end
+  local base = distro_setup(root)
   if is_file(base) then table.insert(result, base) end
   local overlay = workspace_root(context) .. '/install/setup.zsh'
   if is_file(overlay) then table.insert(result, overlay) end
@@ -132,7 +163,7 @@ function M.refresh_compile_commands(context)
       vim.notify(
         'No ROS compile_commands.json found. Run the ROS build action with CMAKE_EXPORT_COMPILE_COMMANDS enabled.',
         vim.log.levels.WARN,
-        { title = 'ROS 2 Jazzy' }
+        { title = 'ROS 2' }
       )
     end
     return result

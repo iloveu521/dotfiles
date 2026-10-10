@@ -290,7 +290,6 @@
   "editor.guides.bracketPairs": "active",
   "editor.guides.highlightActiveBracketPair": true,
   "terminal.integrated.minimumContrastRatio": 1,
-  "editor.fontLigatures": true,
   "git.openRepositoryInParentFolders": "never",
   "editor.inlineSuggest.enabled": false,
 

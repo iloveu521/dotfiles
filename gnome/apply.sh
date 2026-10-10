@@ -44,7 +44,11 @@ blur_schema_dir=$(find_blur_schema_dir) || {
   exit 1
 }
 
-for schema in org.gnome.desktop.interface org.gnome.desktop.wm.preferences; do
+for schema in \
+  org.gnome.desktop.interface \
+  org.gnome.desktop.wm.preferences \
+  org.gnome.mutter \
+  org.gnome.desktop.wm.keybindings; do
   gsettings list-schemas | grep -Fxq "$schema" || {
     printf 'error: required GNOME schema is unavailable: %s\n' "$schema" >&2
     exit 1
@@ -60,6 +64,8 @@ section_schema() {
   case $1 in
     org/gnome/desktop/interface) printf '%s\n' org.gnome.desktop.interface ;;
     org/gnome/desktop/wm/preferences) printf '%s\n' org.gnome.desktop.wm.preferences ;;
+    org/gnome/mutter) printf '%s\n' org.gnome.mutter ;;
+    org/gnome/desktop/wm/keybindings) printf '%s\n' org.gnome.desktop.wm.keybindings ;;
     org/gnome/shell/extensions/blur-my-shell/applications) printf '%s\n' "$blur_schema" ;;
     *) return 1 ;;
   esac
@@ -72,6 +78,12 @@ allowed_keys() {
       ;;
     org/gnome/desktop/wm/preferences)
       printf '%s\n' button-layout focus-mode theme
+      ;;
+    org/gnome/mutter)
+      printf '%s\n' auto-maximize center-new-windows
+      ;;
+    org/gnome/desktop/wm/keybindings)
+      printf '%s\n' minimize
       ;;
     org/gnome/shell/extensions/blur-my-shell/applications)
       printf '%s\n' blur brightness color dynamic-opacity opacity pipeline sigma whitelist
@@ -132,6 +144,8 @@ done <"$settings_file"
 for required_section in \
   org/gnome/desktop/interface \
   org/gnome/desktop/wm/preferences \
+  org/gnome/mutter \
+  org/gnome/desktop/wm/keybindings \
   org/gnome/shell/extensions/blur-my-shell/applications; do
   [[ -n ${seen_sections[$required_section]:-} ]] || {
     printf 'error: required GNOME settings section is missing: %s\n' "$required_section" >&2
@@ -153,4 +167,4 @@ for index in "${!entry_schemas[@]}"; do
     gsettings set "${entry_schemas[$index]}" "${entry_keys[$index]}" "${entry_values[$index]}"
   fi
 done
-printf 'applied reviewed GNOME interface, window, and Blur My Shell settings\n'
+printf 'applied reviewed GNOME interface, window, keybinding, and Blur My Shell settings\n'

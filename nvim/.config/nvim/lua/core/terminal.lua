@@ -51,13 +51,13 @@ end
 
 -- 打开第 index 号常驻终端。参数 index：编号（字符串/数字，非法值回退为 1）。
 -- 返回 Terminal 实例。角色名含编号，故 1/2/3 号终端互不干扰；
--- hidden = true 表示初始不占屏幕，只由 toggle 显隐；size = 14 为横向分屏高度。
+-- hidden = true 表示初始不占屏幕，只由 toggle 显隐；终端默认垂直占半屏宽度。
 function M.general(index)
   index = tonumber(index) or 1
   return open('general:' .. index, {
     count = index,
-    direction = 'horizontal',
-    size = 14,
+    direction = 'vertical',
+    size = function() return math.floor(vim.o.columns / 2) end,
     display_name = 'Terminal ' .. index,
     hidden = true,
   })
@@ -87,8 +87,8 @@ function M.run_build(name, argv, cwd, env_script, options)
   return open(role, {
     cmd = command,
     dir = cwd,
-    direction = 'horizontal',
-    size = 14,
+    direction = 'vertical',
+    size = function() return math.floor(vim.o.columns / 2) end,
     close_on_exit = false,
     display_name = name,
     hidden = true,
@@ -108,8 +108,8 @@ function M.ros_shell(context)
   return open('ros-shell:' .. context.root, {
     cmd = command,
     dir = context.root,
-    direction = 'horizontal',
-    size = 14,
+    direction = 'vertical',
+    size = function() return math.floor(vim.o.columns / 2) end,
     display_name = 'ROS shell',
     hidden = true,
   })

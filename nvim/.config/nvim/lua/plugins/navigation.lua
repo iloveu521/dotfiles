@@ -40,7 +40,12 @@ return {
     'nvim-telescope/telescope.nvim',
     cmd = 'Telescope',  -- 懒加载触发点：首次执行 :Telescope 或按下下面任一快捷键时才加载
     -- plenary 提供底层工具函数，fzf-native 提供高速排序
-    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope-fzf-native.nvim' },
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-telescope/telescope-fzf-native.nvim',
+      -- 把 vim.ui.select（代码操作、选择器等）渲染为 Telescope 圆角下拉框。
+      'nvim-telescope/telescope-ui-select.nvim',
+    },
     keys = {
       -- 空格 f f（普通模式）：按文件名查找项目文件；hidden 让点号开头的隐藏文件也进入候选
       { '<leader>ff', project_picker('find_files', { hidden = true }), desc = 'Find project files' },
@@ -88,15 +93,21 @@ return {
         },
       },
       -- 启用 fzf 扩展：开启模糊匹配，并让普通排序与文件排序都走 fzf 实现。
-      extensions = { fzf = { fuzzy = true, override_generic_sorter = true, override_file_sorter = true } },
+      extensions = {
+        fzf = { fuzzy = true, override_generic_sorter = true, override_file_sorter = true },
+        ['ui-select'] = {},
+      },
     },
     config = function(_, opts)
       -- 取出 telescope 主模块（extensions 里的配置在加载扩展时才读取）。
       local telescope = require('telescope')
+      -- themes 只有 Telescope 真正加载后才可 require；此处生成圆角紧凑下拉布局。
+      opts.extensions['ui-select'] = require('telescope.themes').get_dropdown()
       -- 注册上面的 defaults 与 extensions 配置。
       telescope.setup(opts)
       -- 用 pcall 包裹：make 缺失导致扩展未编译时静默跳过，不影响 Telescope 本身。
       pcall(telescope.load_extension, 'fzf')
+      pcall(telescope.load_extension, 'ui-select')
     end,
   },
   -- 文件树侧栏：以树形浏览项目结构，并提供文件操作类命令。
@@ -115,9 +126,47 @@ return {
       popup_border_style = 'rounded',
       -- follow_current_file：文件树跟随当前缓冲区，自动展开并定位；
       -- use_libuv_file_watcher：用 libuv 监听磁盘变化，外部改动即时刷新。
-      filesystem = { follow_current_file = { enabled = true }, use_libuv_file_watcher = true },
-      -- 侧栏固定 34 列：够显示两层文件名与图标，又不侵占编辑区。
-      window = { width = 34 },
+      default_component_configs = {
+        indent = {
+          with_markers = true,
+          indent_marker = '│',
+          last_indent_marker = '└',
+          expander_collapsed = '',
+          expander_expanded = '',
+        },
+        icon = { folder_closed = '', folder_open = '', folder_empty = '󰜌' },
+        git_status = {
+          symbols = {
+            added = '✚',
+            modified = '',
+            deleted = '✖',
+            renamed = '󰁕',
+            untracked = '',
+            ignored = '',
+            unstaged = '󰄱',
+            staged = '',
+            conflict = '',
+          },
+        },
+      },
+      filesystem = {
+        follow_current_file = { enabled = true },
+        use_libuv_file_watcher = true,
+        -- 覆盖 Neo-tree 默认过滤规则：点文件、点目录、gitignore 项和 OS 隐藏项全部显示。
+        filtered_items = { hide_dotfiles = false, hide_gitignored = false, hide_ignored = false, hide_hidden = false },
+      },
+      -- 显式列出常用文件操作，避免依赖插件默认映射而让“如何编辑”不透明。
+      window = {
+        width = 34,
+        mappings = {
+          ['<cr>'] = 'open',
+          l = 'open',
+          a = { 'add', config = { show_path = 'none' } },
+          A = 'add_directory',
+          r = 'rename',
+          d = 'delete',
+        },
+      },
     },
   },
   -- 符号大纲：按 LSP/treesitter 列出当前文件的函数、类、变量等符号。

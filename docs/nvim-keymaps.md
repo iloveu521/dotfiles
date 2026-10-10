@@ -69,6 +69,7 @@
 | `<M-b>` | n | 跳回上一次跳转前的位置（`C-o`） |
 | `<M-a>` | n | 删除当前整行（`dd`） |
 | `<M-a>` | i | 删除当前整行并回到插入模式（`<Esc>ddi`） |
+| `<M-BS>` | i | 等同 Delete，删除光标下字符 |
 
 > 插入模式下 `<M-i>` / `<M-k>` 与补全菜单的选择键重叠：菜单打开时由 blink.cmp 接管（选择上一项/下一项），菜单未打开时回退为光标移动。
 
@@ -274,7 +275,7 @@ ROS 项目会自动注入 `source` 环境脚本后的环境变量，并在启动
 | `<leader>rc` | n | 手动刷新 `compile_commands.json` 并重启 clangd |
 | `<leader>rr` | n | 运行包内可执行文件（`ros2 run <包名> <可执行文件>`，会提示输入名称） |
 
-环境脚本按顺序 source：`/opt/ros/jazzy/setup.zsh` 与 `<工作空间>/install/setup.zsh`（存在才加载）。
+环境脚本按顺序 source：自动发现的 `/opt/ros/<distro>/setup.zsh` 与 `<工作空间>/install/setup.zsh`（存在才加载）。
 构建成功后会自动刷新编译数据库并为该工作空间重启 clangd，使跳转与补全立即生效。
 
 ## 20. 会话管理（plugins/editing.lua，persistence）

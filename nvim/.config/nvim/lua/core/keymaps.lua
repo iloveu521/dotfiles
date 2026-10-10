@@ -89,6 +89,8 @@ function M.setup()
   map('n', '<M-a>', 'dd', { silent = true, desc = 'Delete line' })
   -- <M-a>：insert 模式；先退出插入模式再删整行，最后回到插入模式继续输入。
   map('i', '<M-a>', '<Esc>ddi', { silent = true, desc = 'Delete line' })
+  -- <M-BS>：insert 模式；按 Delete 键删除光标下的字符。
+  map('i', '<M-BS>', '<Del>', { silent = true, desc = 'Delete character' })
 
   -- 使用 Ctrl+H/J/K/L 在分屏间切换；同样适用于 Neo-tree 和终端窗口。
   -- 循环为四个方向各注册两条映射：normal 沿用 <C-w> 前缀，terminal 先退出终端输入态再切窗口。
@@ -120,6 +122,8 @@ function M.setup()
   map('n', '<Right>', '<Cmd>vertical resize +2<CR>', { silent = true, desc = 'Increase window width' })
 
   -- 编辑辅助：快速退出插入模式；缩进后保留选择；粘贴时不覆盖复制寄存器。
+  -- x：normal 模式；删除单个字符时写入黑洞寄存器，避免覆盖刚复制的内容。
+  map('n', 'x', '"_x', { silent = true, desc = 'Delete character without yanking' })
   -- jk：insert 模式；连按两键退出插入，比伸手按 <Esc> 省力，正常打字节奏几乎不会误触。
   map('i', 'jk', '<Esc>', { silent = true, desc = 'Leave insert mode' })
   -- <：visual 模式；左缩进一级后用 gv 重新选中，可以连续按。

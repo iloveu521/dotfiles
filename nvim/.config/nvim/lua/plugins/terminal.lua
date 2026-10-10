@@ -40,8 +40,10 @@ return {
       { '<leader>ak', function() require('core.agents').kill() end, desc = 'Kill agent session' },
     },
     opts = {
-      -- 水平分割高度；与 core.terminal 里 general / build 等角色终端的 size 保持一致
-      size = 14,
+      -- 垂直分割宽度：默认占一半编辑器宽度，形成均等分栏。
+      size = function()
+        return math.floor(vim.o.columns / 2)
+      end,
       -- 关键取舍：不注册插件自带的 <C-\> 映射。上面的 keys 已经显式绑定了 <C-\>，
       -- 若让插件再占一次，会在懒加载完成后覆盖自定义回调；置 false 意味着
       -- 「打开终端的时机与方式完全由本配置决定」，而不是 toggleterm 的默认行为。
@@ -52,8 +54,8 @@ return {
       persist_size = true,
       -- 切走再切回时恢复离开前的模式，避免每次回到终端都被扔进 insert 模式
       persist_mode = true,
-      -- 默认在底部水平分割；编码助手的竖直大终端由 core.agents 单独指定 direction
-      direction = 'horizontal',
+      -- 默认在右侧垂直均等分割；编码助手的布局由 core.agents 单独指定。
+      direction = 'vertical',
     },
     config = function(_, opts)
       -- 这里手动 setup 而非交给 lazy.nvim 自动处理 opts，是为了紧接着补一条终端模式映射

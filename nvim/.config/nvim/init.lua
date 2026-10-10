@@ -12,6 +12,8 @@ init.lua — Neovim 配置总入口
 require('core.options').setup()
 -- 自动命令：按文件类型覆盖缩进、复制后高亮等事件驱动行为。
 require('core.autocmds').setup()
+-- 诊断显示：语义高亮优先级、虚拟文本、符号与透明背景。
+require('core.snippets').setup()
 -- 快捷键：normal/insert/visual/terminal 全部映射集中注册，依赖 options 中设好的 leader。
 require('core.keymaps').setup()
 -- 项目管理：项目与会话相关的辅助命令和切换逻辑。

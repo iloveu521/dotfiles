@@ -163,7 +163,4 @@ if [[ -r "$HOME/.config/zsh/ros.zsh" ]]; then
 fi
 # <<< dotfiles rosenv <<<
 #
-export ROS_DISTRO=humble
-
-
 export PATH="$HOME/.local/bin:$PATH"
