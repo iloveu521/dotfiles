@@ -112,6 +112,8 @@ return {
           SignColumn = { bg = 'NONE' },
           -- 缓冲区末尾的 ~ 行不绘制背景，视觉上更干净。
           EndOfBuffer = { bg = 'NONE' },
+          -- 普通文本不支持 blend；使用预混合紫色背景，同时保留原有语法前景色。
+          Visual = { bg = '#524a76' },
           -- 分屏分隔线用 surface1：弱化存在感但仍可辨识。
           WinSeparator = { fg = colors.surface1, bg = 'NONE' },
           -- 浮动窗口边框用 mauve、底色用 mantle，让浮层与编辑区区分开。

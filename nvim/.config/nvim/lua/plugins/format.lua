@@ -48,7 +48,8 @@ return {
         cpp = { 'clang_format' },
         lua = { 'stylua' },
         cmake = { 'cmake_format' },
-        python = { 'ruff_format' },
+        -- Ruff formatter 本身不排序 import：先执行 I 规则修复，再应用 Black 兼容格式。
+        python = { 'ruff_organize_imports', 'ruff_format' },
       },
       -- clang_format 的实际命令名是 clang-format（此处的 key 只是上面的引用名）。
       formatters = { clang_format = { command = 'clang-format' } },

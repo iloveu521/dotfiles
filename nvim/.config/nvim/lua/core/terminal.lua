@@ -43,21 +43,62 @@ local function create(role, opts)
 end
 
 -- 取出（必要时新建）并 toggle 该角色终端。参数 role/opts 同上；返回 Terminal 实例。
+local function split_size(direction, origin)
+  if direction == 'vertical' then
+    return math.max(1, math.floor(vim.api.nvim_win_get_width(origin) / 2))
+  end
+  return math.max(1, math.floor(vim.o.lines / 4))
+end
+
+-- 相对当前编辑窗口打开 ToggleTerm 缓冲区。插件内置的 botright split 会横跨整个
+-- 标签页；这里先创建/复用终端缓冲区，再用普通 split/vsplit 只切当前窗口。
+function M.toggle_instance(instance, direction)
+  if instance:is_open() then
+    local layout_changed = direction and direction ~= instance.direction
+    instance:close()
+    if not layout_changed then return instance end
+  end
+
+  direction = direction or instance.direction or 'horizontal'
+  local origin = vim.api.nvim_get_current_win()
+  local size = split_size(direction, origin)
+  instance.direction = direction
+  if not instance.bufnr or not vim.api.nvim_buf_is_valid(instance.bufnr) then instance:spawn() end
+
+  require('toggleterm.ui').set_origin_window()
+  vim.cmd(direction == 'vertical' and 'rightbelow vsplit' or 'rightbelow split')
+  instance.window = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_set_buf(instance.window, instance.bufnr)
+  if direction == 'vertical' then
+    vim.api.nvim_win_set_width(instance.window, size)
+  else
+    vim.api.nvim_win_set_height(instance.window, size)
+  end
+  instance:__set_options()
+  require('toggleterm.ui').hl_term(instance)
+  if instance.on_open then instance:on_open() end
+  vim.cmd('startinsert')
+  return instance
+end
+
 local function open(role, opts)
   local instance = create(role, opts)
-  instance:toggle()
-  return instance
+  return M.toggle_instance(instance, opts.direction)
 end
 
 -- 打开第 index 号常驻终端。参数 index：编号（字符串/数字，非法值回退为 1）。
 -- 返回 Terminal 实例。角色名含编号，故 1/2/3 号终端互不干扰；
--- hidden = true 表示初始不占屏幕，只由 toggle 显隐；终端默认垂直占半屏宽度。
-function M.general(index)
+-- hidden = true 表示初始不占屏幕，只由 toggle 显隐；默认在下方占标签页高度四分之一。
+function M.general(index, direction)
   index = tonumber(index) or 1
+  direction = direction or 'horizontal'
   return open('general:' .. index, {
     count = index,
-    direction = 'vertical',
-    size = function() return math.floor(vim.o.columns / 2) end,
+    direction = direction,
+    size = function(term)
+      if term.direction == 'vertical' then return math.floor(vim.o.columns / 2) end
+      return math.floor(vim.o.lines / 4)
+    end,
     display_name = 'Terminal ' .. index,
     hidden = true,
   })
@@ -87,8 +128,8 @@ function M.run_build(name, argv, cwd, env_script, options)
   return open(role, {
     cmd = command,
     dir = cwd,
-    direction = 'vertical',
-    size = function() return math.floor(vim.o.columns / 2) end,
+    direction = 'horizontal',
+    size = function() return math.floor(vim.o.lines / 4) end,
     close_on_exit = false,
     display_name = name,
     hidden = true,
@@ -108,8 +149,8 @@ function M.ros_shell(context)
   return open('ros-shell:' .. context.root, {
     cmd = command,
     dir = context.root,
-    direction = 'vertical',
-    size = function() return math.floor(vim.o.columns / 2) end,
+    direction = 'horizontal',
+    size = function() return math.floor(vim.o.lines / 4) end,
     display_name = 'ROS shell',
     hidden = true,
   })

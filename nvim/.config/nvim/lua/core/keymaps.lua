@@ -14,6 +14,32 @@ function M.setup()
   local map = vim.keymap.set
   local silent = { silent = true }
 
+  -- 移动行前检查缓冲区边界；到达首尾时与 VS Code 一样静默保持原位。
+  local function move_line(direction)
+    local line = vim.fn.line('.')
+    local last_line = vim.fn.line('$')
+    if (direction < 0 and line == 1) or (direction > 0 and line == last_line) then return end
+    vim.cmd(direction < 0 and 'move .-2' or 'move .+1')
+    vim.cmd('normal! ==')
+  end
+
+  -- 可视回调触发时 '< / '> 可能尚未更新，因此用实时 Visual 锚点 v 与当前光标计算范围。
+  local function move_selection(direction)
+    local anchor = vim.fn.getpos('v')
+    local cursor = vim.fn.getcurpos()
+    local anchor_before_cursor = anchor[2] < cursor[2] or (anchor[2] == cursor[2] and anchor[3] <= cursor[3])
+    local first = anchor_before_cursor and anchor or cursor
+    local last = anchor_before_cursor and cursor or anchor
+    local first_line = first[2]
+    local last_line = last[2]
+    if (direction < 0 and first_line == 1) or (direction > 0 and last_line == vim.fn.line('$')) then return end
+    local destination = direction < 0 and first_line - 2 or last_line + 1
+    vim.cmd(('%d,%dmove %d'):format(first_line, last_line, destination))
+    vim.fn.setpos("'<", { 0, first_line + direction, first[3], first[4] })
+    vim.fn.setpos("'>", { 0, last_line + direction, last[3], last[4] })
+    vim.cmd('normal! gv=gv')
+  end
+
   -- 基础操作：按屏幕显示行移动、清除搜索高亮，以及保存文件。
   -- j：normal 模式；无计数时走 gj（按显示行下移，长折行不会一次跨过整段），带计数时保持原生 j。
   map('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true, desc = 'Move down by display line' })
@@ -59,6 +85,16 @@ function M.setup()
   map('t', '<M-j>', '<Left>', { desc = 'Terminal cursor left' })
   -- <M-l>：terminal 模式；终端命令行光标右移。
   map('t', '<M-l>', '<Right>', { desc = 'Terminal cursor right' })
+
+  -- Alt+Shift+I/K：按 VS Code 习惯移动当前行或整段选区，并在移动后重新缩进。
+  -- <M-I>：normal 模式；把当前行向上移动一行，== 按语法重新计算该行缩进。
+  map('n', '<M-I>', function() move_line(-1) end, { silent = true, desc = 'Move line up' })
+  -- <M-K>：normal 模式；把当前行向下移动一行。
+  map('n', '<M-K>', function() move_line(1) end, { silent = true, desc = 'Move line down' })
+  -- <M-I>：visual 模式；整段上移后用 gv 恢复选区，便于连续移动。
+  map('x', '<M-I>', function() move_selection(-1) end, { silent = true, desc = 'Move selection up' })
+  -- <M-K>：visual 模式；整段下移后同样保持选中。
+  map('x', '<M-K>', function() move_selection(1) end, { silent = true, desc = 'Move selection down' })
 
   -- Alt+U/O 跳到行首/行尾，Alt+Shift+J/L 按单词向左/向右移动。
   -- <M-u>：normal 与 visual 模式；跳到行首第一个非空白字符（^）。
@@ -142,10 +178,10 @@ function M.setup()
   map('n', '<leader>uw', '<Cmd>set wrap!<CR>', { silent = true, desc = 'Toggle line wrap' })
 
   -- 诊断信息：跳到前后诊断，或显示当前行的浮动诊断窗口。
-  -- [d：normal 模式；跳到上一条诊断并把详情显示在浮窗中（float = true）。
-  map('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, { desc = 'Previous diagnostic' })
-  -- ]d：normal 模式；跳到下一条诊断并弹出浮窗。
-  map('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, { desc = 'Next diagnostic' })
+  -- [d：normal 模式；跳到上一条诊断，详情等 CursorHold 或 gl 再显示。
+  map('n', '[d', function() vim.diagnostic.jump({ count = -1, float = false }) end, { desc = 'Previous diagnostic' })
+  -- ]d：normal 模式；跳到下一条诊断，不在跳转瞬间弹出浮窗。
+  map('n', ']d', function() vim.diagnostic.jump({ count = 1, float = false }) end, { desc = 'Next diagnostic' })
   -- gl：normal 模式；打开当前行的诊断浮窗，光标位置不变。
   map('n', 'gl', vim.diagnostic.open_float, { desc = 'Line diagnostics' })
 

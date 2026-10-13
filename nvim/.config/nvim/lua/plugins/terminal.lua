@@ -27,6 +27,8 @@ return {
       { '<leader>tt', function() require('core.terminal').general(1) end, desc = 'Terminal 1' },
       { '<leader>t2', function() require('core.terminal').general(2) end, desc = 'Terminal 2' },
       { '<leader>t3', function() require('core.terminal').general(3) end, desc = 'Terminal 3' },
+      { '<leader>th', function() require('core.terminal').general(1, 'horizontal') end, desc = 'Terminal horizontal' },
+      { '<leader>tv', function() require('core.terminal').general(1, 'vertical') end, desc = 'Terminal vertical' },
       -- <C-\>：沿用 toggleterm 的经典键位习惯，但显式重绑到 1 号通用终端，
       -- 与 <leader>tt 指向同一实例，不会出现两个互不相干的「1 号终端」。
       { [[<C-\>]], function() require('core.terminal').general(1) end, desc = 'Toggle terminal' },
@@ -40,9 +42,10 @@ return {
       { '<leader>ak', function() require('core.agents').kill() end, desc = 'Kill agent session' },
     },
     opts = {
-      -- 垂直分割宽度：默认占一半编辑器宽度，形成均等分栏。
-      size = function()
-        return math.floor(vim.o.columns / 2)
+      -- 上下分割占标签页高度的四分之一；左右分割占宽度的一半。
+      size = function(term)
+        if term and term.direction == 'vertical' then return math.floor(vim.o.columns / 2) end
+        return math.floor(vim.o.lines / 4)
       end,
       -- 关键取舍：不注册插件自带的 <C-\> 映射。上面的 keys 已经显式绑定了 <C-\>，
       -- 若让插件再占一次，会在懒加载完成后覆盖自定义回调；置 false 意味着
@@ -54,8 +57,8 @@ return {
       persist_size = true,
       -- 切走再切回时恢复离开前的模式，避免每次回到终端都被扔进 insert 模式
       persist_mode = true,
-      -- 默认在右侧垂直均等分割；编码助手的布局由 core.agents 单独指定。
-      direction = 'vertical',
+      -- 默认在下方水平分割；编码助手的布局由 core.agents 单独指定。
+      direction = 'horizontal',
     },
     config = function(_, opts)
       -- 这里手动 setup 而非交给 lazy.nvim 自动处理 opts，是为了紧接着补一条终端模式映射

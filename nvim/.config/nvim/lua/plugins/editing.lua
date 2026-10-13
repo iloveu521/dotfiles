@@ -2,8 +2,8 @@
 lua/plugins/editing.lua — 编辑增强 spec
 
 包含：gitsigns（缓冲区内的 Git 改动标记与 hunk 操作）、nvim-autopairs（自动配对
-括号引号）、todo-comments（TODO/FIXME 等注释的高亮与检索）、persistence（按项目
-保存与恢复会话）。
+括号引号）、multicursor.nvim（匹配项多光标）、todo-comments（TODO/FIXME 等注释
+的高亮与检索）、persistence（按项目保存与恢复会话）。
 
 加载时机：全部惰性——gitsigns 与 todo-comments 在打开文件时加载，autopairs 在首次
 进入插入模式时加载，persistence 在读取第一个文件之前挂载并等快捷键触发；
@@ -14,6 +14,45 @@ leader 的 g / f / q / b 前缀下。
 ]]
 
 return {
+  -- 多光标：与 VS Code 共用 Alt+[ / Alt+] / Alt+P 的上一处、下一处、全部匹配操作。
+  {
+    'jake-stewart/multicursor.nvim',
+    branch = '1.0',
+    keys = {
+      {
+        '<M-[>',
+        function() require('multicursor-nvim').matchAddCursor(-1) end,
+        mode = { 'n', 'x' },
+        desc = 'Add cursor at previous match',
+      },
+      {
+        '<M-]>',
+        function() require('multicursor-nvim').matchAddCursor(1) end,
+        mode = { 'n', 'x' },
+        desc = 'Add cursor at next match',
+      },
+      {
+        '<M-p>',
+        function() require('multicursor-nvim').matchAllAddCursors() end,
+        mode = { 'n', 'x' },
+        desc = 'Add cursors at all matches',
+      },
+    },
+    config = function()
+      local mc = require('multicursor-nvim')
+      mc.setup()
+      -- 第一次 Esc 重新启用临时禁用的光标，再按一次清除全部多光标。
+      mc.addKeymapLayer(function(layer_set)
+        layer_set('n', '<Esc>', function()
+          if mc.cursorsEnabled() then
+            mc.clearCursors()
+          else
+            mc.enableCursors()
+          end
+        end)
+      end)
+    end,
+  },
   -- Git 集成：在符号列标出新增/修改/删除，并提供 hunk 级操作。
   {
     'lewis6991/gitsigns.nvim',
