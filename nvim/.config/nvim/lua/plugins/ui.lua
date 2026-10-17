@@ -218,14 +218,24 @@ return {
     version = '*',  -- 跟随最新稳定版（官方推荐写法，避免用到未发布的改动）
     event = 'VeryLazy',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
+    -- 顶栏条目是缓冲区（buffer），不是 tabpage：关闭它们靠 :bdelete / :BufferLine*；
+    -- 把关闭与选择类操作挂在 bufferline 的 keys 上，按需加载插件（event 仍作兜底）。
+    keys = {
+      -- 空格 b o（普通模式）：关闭除当前项以外的所有顶栏条目
+      { '<leader>bo', '<Cmd>BufferLineCloseOthers<CR>', desc = 'Delete other buffers' },
+      -- 空格 b p（普通模式）：顶栏出现字母提示，按字母选择要关闭的条目
+      { '<leader>bp', '<Cmd>BufferLinePickClose<CR>', desc = 'Pick buffer to close' },
+      -- 空格 b v（普通模式）：顶栏出现字母提示，按字母跳到对应条目
+      { '<leader>bv', '<Cmd>BufferLinePick<CR>', desc = 'Pick buffer to jump to' },
+    },
     -- diagnostics 取 'nvim_lsp'：诊断只由 LSP 提供，无需合并其它来源；
-    -- 使用细分隔线和下划线标记当前项，避免斜角与关闭图标让顶栏显得拥挤。
+    -- 使用细分隔线和下划线标记当前项；关闭图标打开后可以鼠标点 ✕ 关掉顶栏条目。
     opts = {
       options = {
         diagnostics = 'nvim_lsp',
         separator_style = 'thin',
         indicator = { style = 'underline' },
-        show_buffer_close_icons = false,
+        show_buffer_close_icons = true,
         show_close_icon = false,
       },
     },

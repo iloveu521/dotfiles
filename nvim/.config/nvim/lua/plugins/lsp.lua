@@ -10,7 +10,7 @@
   加载时机：
     * nvim-lspconfig 在读取缓冲区时加载（BufReadPre / BufNewFile），保证一打开文件就能挂上服务器；
     * 下面 keys 中声明的映射是「全局懒加载键」，即使还没打开文件也能按，按键时才加载插件。
-  本文件启用的服务器：clangd（C/C++/CUDA）、lua_ls、basedpyright、ruff。
+  本文件启用的服务器：clangd（C/C++/CUDA）、lua_ls、basedpyright、ruff、lemminx（XML/URDF/Xacro）。
 ]]
 
 -- 语言服务器挂载到缓冲区后（LspAttach）注册的缓冲区级映射。
@@ -45,7 +45,17 @@ return {
       --   codelldb            —— C/C++/Rust 调试适配器（配合 plugins/debug.lua）
       --   basedpyright        —— Python 类型检查/补全
       --   ruff                —— Python 代码检查与格式化
-      ensure_installed = { 'lua-language-server', 'stylua', 'codelldb', 'basedpyright', 'ruff' },
+      --   lemminx             —— XML 语言服务器（URDF/Xacro）
+      --   tree-sitter-cli     —— nvim-treesitter main 分支编译 parser 所需工具
+      ensure_installed = {
+        'lua-language-server',
+        'stylua',
+        'codelldb',
+        'basedpyright',
+        'ruff',
+        'lemminx',
+        'tree-sitter-cli',
+      },
       -- 每次启动都检查一次，保证换机器/重装后能自动补齐。
       run_on_start = true,
     },
@@ -115,8 +125,13 @@ return {
         -- 关闭 ruff 的 hover：类型信息交给 basedpyright，避免同一个 K 弹出两份重复内容。
         on_attach = function(client) client.server_capabilities.hoverProvider = false end,
       })
+      -- lemminx：XML 诊断、补全、标签导航与格式化；URDF/Xacro 在 plugins/xml.lua 中映射为 XML。
+      vim.lsp.config('lemminx', {
+        capabilities = capabilities,
+        filetypes = { 'xml' },
+      })
       -- 启用上面配置好的服务器；lspconfig 会在匹配的文件类型上自动挂载。
-      vim.lsp.enable({ 'clangd', 'lua_ls', 'basedpyright', 'ruff' })
+      vim.lsp.enable({ 'clangd', 'lua_ls', 'basedpyright', 'ruff', 'lemminx' })
 
       -- 服务器挂载后注册缓冲区级映射（gd / gD / gr / K / <leader>ca / <leader>cr）。
       vim.api.nvim_create_autocmd('LspAttach', { callback = lsp_mappings })

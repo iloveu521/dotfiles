@@ -127,6 +127,8 @@ fi
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 alias bat="batcat"
+alias utc='date -u +"%Y-%m-%dT%H:%M:%SZ"'
+alias cst='TZ=Asia/Shanghai date +"%Y-%m-%dT%H:%M:%S%:z"'
 
 # >>> dsh-home zsh setup >>>
 # Load plugins installed from the system packages.
@@ -156,6 +158,35 @@ bindkey '^[i' up-line-or-history
 bindkey '^[j' backward-char
 bindkey '^[k' down-line-or-history
 bindkey '^[l' forward-char
+
+
+# >>> bat <<<
+export BAT_STYLE="numbers,changes,header"
+# 彩色风格man
+export MANPAGER="batcat -plman"
+# 模糊搜索+预览代码+noevim
+nvf() {
+  local file
+  file=$(fd --type f --hidden \
+      --exclude .git \
+      --exclude build \
+      --exclude install \
+      --exclude log \
+      | fzf \
+        --preview 'batcat --color=always --style=numbers --line-range=:500 {}' \
+        --preview-window='right:60%:wrap'
+    ) || return
+
+  [[ -n "$file" ]] && nvim "$file"
+}
+# git diff 
+gdiff() {
+  git diff --no-color "$@" |
+    batcat --language=diff \
+           --plain \
+           --paging=always
+}
+
 
 # >>> dotfiles rosenv >>>
 if [[ -r "$HOME/.config/zsh/ros.zsh" ]]; then

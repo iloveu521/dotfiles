@@ -15,10 +15,10 @@
 --   cmake                       —— CMakeLists.txt
 --   lua                         —— 本配置自身
 --   bash                        —— shell 脚本
---   json / yaml                 —— 配置与参数文件
+--   json / yaml / xml           —— 配置、参数与 URDF/Xacro 文件
 --   markdown / markdown_inline  —— 文档及其行内代码
 --   vim / vimdoc                —— vimscript 与 :help 文档
-local parsers = { 'c', 'cpp', 'cmake', 'lua', 'bash', 'json', 'yaml', 'markdown', 'markdown_inline', 'vim', 'vimdoc' }
+local parsers = { 'c', 'cpp', 'cmake', 'lua', 'bash', 'json', 'yaml', 'xml', 'markdown', 'markdown_inline', 'vim', 'vimdoc' }
 
 return {
   {
@@ -46,7 +46,7 @@ return {
       -- 按文件类型启用 treesitter：启动解析、高亮，并接管缩进。
       vim.api.nvim_create_autocmd('FileType', {
         -- 注意这里是 filetype 名而不是解析器名：shell 脚本的 filetype 是 sh，对应上面的 bash 解析器。
-        pattern = { 'c', 'cpp', 'cmake', 'lua', 'sh', 'json', 'yaml', 'markdown', 'vim', 'vimdoc' },
+        pattern = { 'c', 'cpp', 'cmake', 'lua', 'sh', 'json', 'yaml', 'xml', 'markdown', 'vim', 'vimdoc' },
         callback = function(event)
           -- 解析器缺失或启动失败时静默跳过，自动回退到正则高亮，不影响正常编辑。
           if not pcall(vim.treesitter.start, event.buf) then return end

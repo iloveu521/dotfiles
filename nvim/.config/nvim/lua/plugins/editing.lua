@@ -102,8 +102,20 @@ return {
       { '<leader>ql', function() require('persistence').load({ last = true }) end, desc = 'Restore last session' },
       -- 空格 q d（普通模式）：停止本次会话的自动保存，退出时不再写会话文件
       { '<leader>qd', function() require('persistence').stop() end, desc = 'Do not save session' },
-      -- 空格 b d（普通模式）：删除（关闭）当前缓冲区，与会话/缓冲区管理放在一起
-      { '<leader>bd', '<Cmd>bdelete<CR>', desc = 'Delete buffer' },
+      -- 空格 b d（普通模式）：删除（关闭）当前缓冲区，与会话/缓冲区管理放在一起。
+      -- 保留 bdelete 的语义但不加 !：先看 modified，避免 'hidden' 下静默丢弃改动。
+      -- 注意 :bdelete 最多把最后一个 buffer 变成空的 [No Name]，不会关窗口、也不会退出 Neovim。
+      {
+        '<leader>bd',
+        function()
+          if vim.bo.modified then
+            vim.notify('缓冲区有未保存修改：先 :w 保存，或用 :bd! 强制丢弃', vim.log.levels.WARN)
+            return
+          end
+          vim.cmd('bdelete')
+        end,
+        desc = 'Delete buffer',
+      },
     },
   },
 }

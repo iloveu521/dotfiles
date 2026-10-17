@@ -18,21 +18,25 @@ local M = {}
 -- 受支持的助手清单：name 为标识与显示名，cmd 为可执行名，guidance 是缺失时的安装提示。
 -- 顺序即 telescope 列表顺序；guidance 属于面向用户的英文文案，原样保留。
 local definitions = {
-  { name = 'codex', cmd = 'codex', guidance = 'Install the Codex CLI and authenticate outside Neovim.' },
-  { name = 'claude', cmd = 'claude', guidance = 'Install the Claude CLI and authenticate outside Neovim.' },
-  { name = 'gemini', cmd = 'gemini', guidance = 'Install the Gemini CLI and authenticate outside Neovim.' },
-  { name = 'opencode', cmd = 'opencode', guidance = 'Install the OpenCode CLI and configure it outside Neovim.' },
+	{ name = "codex", cmd = "codex", guidance = "Install the Codex CLI and authenticate outside Neovim." },
+	{ name = "claude", cmd = "claude", guidance = "Install the Claude CLI and authenticate outside Neovim." },
+	{ name = "gemini", cmd = "gemini", guidance = "Install the Gemini CLI and authenticate outside Neovim." },
+	{ name = "opencode", cmd = "opencode", guidance = "Install the OpenCode CLI and configure it outside Neovim." },
 }
 
 -- 可执行文件探测函数。默认 vim.fn.executable；测试可通过 M._set_executable 替换。
 local executable_lookup = vim.fn.executable
 local function default_probe(command)
-  local result = vim.system({ command, '--version' }, { text = true }):wait(2000)
-  if result and result.code == 0 then return true end
-  local detail = result and (result.stderr or result.stdout) or 'version check timed out'
-  detail = vim.trim(detail or '')
-  if detail == '' then detail = 'command cannot run' end
-  return false, detail:match('[^\r\n]+')
+	local result = vim.system({ command, "--version" }, { text = true }):wait(2000)
+	if result and result.code == 0 then
+		return true
+	end
+	local detail = result and (result.stderr or result.stdout) or "version check timed out"
+	detail = vim.trim(detail or "")
+	if detail == "" then
+		detail = "command cannot run"
+	end
+	return false, detail:match("[^\r\n]+")
 end
 local runnable_probe = default_probe
 -- 助手名 -> Terminal 实例，实现“每个助手一个常驻会话”
@@ -46,8 +50,10 @@ local last_name
 -- vim.fn.executable 返回 0/1；注入的假实现可能返回路径字符串或 true，
 -- 因此空字符串视为未安装，非空字符串与 1/true 一律视为已安装。
 local function available(value)
-  if type(value) == 'string' then return value ~= '' end
-  return value == true or value == 1
+	if type(value) == "string" then
+		return value ~= ""
+	end
+	return value == true or value == 1
 end
 
 -- 探测全部助手的安装情况。参数 executable_fn：可选的自定义探测函数（默认用内置的）。
@@ -55,50 +61,56 @@ end
 -- label 在已安装时为纯名字，未安装时追加 ' — unavailable'，作为 telescope 的显示文本；
 -- ordinal 另取 name，保证已安装/未安装的前缀不影响搜索排序。
 function M.discover(executable_fn, probe_fn)
-  executable_fn = executable_fn or executable_lookup
-  probe_fn = probe_fn or runnable_probe
-  local result = {}
-  for _, definition in ipairs(definitions) do
-    local installed = available(executable_fn(definition.cmd))
-    local reason
-    if installed then installed, reason = probe_fn(definition.cmd) end
-    local unavailable = reason and (' — unavailable: ' .. reason) or ' — unavailable'
-    table.insert(result, {
-      name = definition.name,
-      cmd = definition.cmd,
-      installed = installed,
-      label = installed and definition.name or (definition.name .. unavailable),
-      guidance = definition.guidance,
-    })
-  end
-  return result
+	executable_fn = executable_fn or executable_lookup
+	probe_fn = probe_fn or runnable_probe
+	local result = {}
+	for _, definition in ipairs(definitions) do
+		local installed = available(executable_fn(definition.cmd))
+		local reason
+		if installed then
+			installed, reason = probe_fn(definition.cmd)
+		end
+		local unavailable = reason and (" — unavailable: " .. reason) or " — unavailable"
+		table.insert(result, {
+			name = definition.name,
+			cmd = definition.cmd,
+			installed = installed,
+			label = installed and definition.name or (definition.name .. unavailable),
+			guidance = definition.guidance,
+		})
+	end
+	return result
 end
 
 -- 捕获打开选择器之前的项目与文件。file 使用相对项目根的路径，既方便展示，也能让
 -- Linux、WSL 与原生 Ubuntu 上的 Agent 在各自文件系统中读取同一个工作区文件。
 function M.current_context(bufnr)
-  bufnr = bufnr or 0
-  local path = vim.api.nvim_buf_get_name(bufnr)
-  local project = require('core.project').current(bufnr)
-  local file
-  if path ~= '' then file = vim.fs.relpath(project.root, vim.fs.normalize(path)) or vim.fs.normalize(path) end
-  return { root = project.root, file = file }
+	bufnr = bufnr or 0
+	local path = vim.api.nvim_buf_get_name(bufnr)
+	local project = require("core.project").current(bufnr)
+	local file
+	if path ~= "" then
+		file = vim.fs.relpath(project.root, vim.fs.normalize(path)) or vim.fs.normalize(path)
+	end
+	return { root = project.root, file = file }
 end
 
--- 生成首次启动命令，把当前文件作为初始上下文交给交互式 Agent。
-function M.command_for(name, context)
-  local command = assert(vim.iter(definitions):find(function(item) return item.name == name end), 'unknown agent')
-  if not context or not context.file then return command.cmd end
-  local prompt = 'The current Neovim file is ' .. context.file .. '. Read it first and use it as the active context.'
-  return require('core.commands').shell_join({ command.cmd, prompt })
-end
+-- -- 生成首次启动命令，把当前文件作为初始上下文交给交互式 Agent。
+-- function M.command_for(name, context)
+--   local command = assert(vim.iter(definitions):find(function(item) return item.name == name end), 'unknown agent')
+--   if not context or not context.file then return command.cmd end
+--   local prompt = 'The current Neovim file is ' .. context.file .. '. Read it first and use it as the active context.'
+--   return require('core.commands').shell_join({ command.cmd, prompt })
+-- end
 
 -- 按名字查回定义项。参数 name：助手名。返回 (定义项, 在列表中的下标)，未找到返回 nil。
 -- 下标用于给终端分配互不冲突的 count（100 + index），保证多个助手分屏编号稳定。
 local function definition(name)
-  for index, item in ipairs(M.discover()) do
-    if item.name == name then return item, index end
-  end
+	for index, item in ipairs(M.discover()) do
+		if item.name == name then
+			return item, index
+		end
+	end
 end
 
 -- 取出或惰性创建某助手的终端实例。参数 agent：定义项；index：列表下标。返回 Terminal 实例。
@@ -107,18 +119,20 @@ end
 -- direction = vertical 给 TUI 一个够宽的右栏；close_on_exit = false
 -- 让 CLI 退出后仍能看到它的最后输出。
 local function instance_for(agent, index, context)
-  if instances[agent.name] then return instances[agent.name] end
-  local root = context and context.root or require('core.project').current().root
-  instances[agent.name] = require('toggleterm.terminal').Terminal:new({
-    cmd = M.command_for(agent.name, context),
-    count = 100 + index,
-    dir = root,
-    direction = 'vertical',
-    display_name = 'Agent: ' .. agent.name,
-    hidden = true,
-    close_on_exit = false,
-  })
-  return instances[agent.name]
+	if instances[agent.name] then
+		return instances[agent.name]
+	end
+	local root = context and context.root or require("core.project").current().root
+	instances[agent.name] = require("toggleterm.terminal").Terminal:new({
+		cmd = M.command_for(agent.name, context),
+		count = 100 + index,
+		dir = root,
+		direction = "vertical",
+		display_name = "Agent: " .. agent.name,
+		hidden = true,
+		close_on_exit = false,
+	})
+	return instances[agent.name]
 end
 
 -- 切换某助手的终端显示/隐藏（模块主入口）。
@@ -127,40 +141,44 @@ end
 -- 随后按 is_open() 的真实结果回写 active_name（开则记为当前，关掉的若是自己则清空），
 -- last_name 只在真正打开时更新，使 M.last() 始终指向“最近用过的”。
 function M.toggle(name, context)
-  local agent, index = definition(name)
-  assert(agent, 'unknown agent: ' .. tostring(name))
-  if not agent.installed then
-    vim.notify(agent.guidance, vim.log.levels.WARN, { title = agent.name .. ' unavailable' })
-    return nil
-  end
+	local agent, index = definition(name)
+	assert(agent, "unknown agent: " .. tostring(name))
+	if not agent.installed then
+		vim.notify(agent.guidance, vim.log.levels.WARN, { title = agent.name .. " unavailable" })
+		return nil
+	end
 
-  if active_name and active_name ~= name then
-    local active = instances[active_name]
-    if active and active:is_open() then active:close() end
-  end
+	if active_name and active_name ~= name then
+		local active = instances[active_name]
+		if active and active:is_open() then
+			active:close()
+		end
+	end
 
-  local instance = instance_for(agent, index, context or M.current_context())
-  require('core.terminal').toggle_instance(instance, 'vertical')
-  if instance:is_open() then
-    active_name = name
-    last_name = name
-  elseif active_name == name then
-    active_name = nil
-  end
-  return instance
+	local instance = instance_for(agent, index, context or M.current_context())
+	require("core.terminal").toggle_instance(instance, "vertical")
+	if instance:is_open() then
+		active_name = name
+		last_name = name
+	elseif active_name == name then
+		active_name = nil
+	end
+	return instance
 end
 
 -- 回到最近使用的助手。无参数；返回 Terminal 实例或 nil。
 -- 若该助手面板当前已打开则直接返回（不再 toggle，避免把它关掉）；
 -- 否则重新 toggle 出来。从未用过任何助手时只给一个 info 提示。
 function M.last()
-  if not last_name then
-    vim.notify('No agent session has been opened yet.', vim.log.levels.INFO, { title = 'Agents' })
-    return nil
-  end
-  local instance = instances[last_name]
-  if instance and instance:is_open() then return instance end
-  return M.toggle(last_name)
+	if not last_name then
+		vim.notify("No agent session has been opened yet.", vim.log.levels.INFO, { title = "Agents" })
+		return nil
+	end
+	local instance = instances[last_name]
+	if instance and instance:is_open() then
+		return instance
+	end
+	return M.toggle(last_name)
 end
 
 -- 彻底结束某助手会话。参数 name：助手名，省略时依次回退到 active_name、last_name。
@@ -168,16 +186,20 @@ end
 -- kill 语义与 toggle/close 不同：shutdown 终止进程并丢弃实例缓存，
 -- 下次 toggle 会重新创建（新会话、新上下文）；同时清理 active_name/last_name 以免留下悬空引用。
 function M.kill(name)
-  name = name or active_name or last_name
-  if not name or not instances[name] then
-    vim.notify('No matching agent session is running.', vim.log.levels.INFO, { title = 'Agents' })
-    return false
-  end
-  instances[name]:shutdown()
-  instances[name] = nil
-  if active_name == name then active_name = nil end
-  if last_name == name then last_name = nil end
-  return true
+	name = name or active_name or last_name
+	if not name or not instances[name] then
+		vim.notify("No matching agent session is running.", vim.log.levels.INFO, { title = "Agents" })
+		return false
+	end
+	instances[name]:shutdown()
+	instances[name] = nil
+	if active_name == name then
+		active_name = nil
+	end
+	if last_name == name then
+		last_name = nil
+	end
+	return true
 end
 
 -- 用 telescope 列出全部助手并选择一个打开。无参数、无返回值。
@@ -185,50 +207,54 @@ end
 -- 默认回车动作被替换为：先关选择器，再对选中项调用 M.toggle。
 -- telescope 的 require 放在函数体内，避免未安装/未使用 telescope 时也要加载它。
 function M.select()
-  local context = M.current_context()
-  local pickers = require('telescope.pickers')
-  local finders = require('telescope.finders')
-  local conf = require('telescope.config').values
-  local actions = require('telescope.actions')
-  local action_state = require('telescope.actions.state')
-  local entries = M.discover()
+	local context = M.current_context()
+	local pickers = require("telescope.pickers")
+	local finders = require("telescope.finders")
+	local conf = require("telescope.config").values
+	local actions = require("telescope.actions")
+	local action_state = require("telescope.actions.state")
+	local entries = M.discover()
 
-  pickers.new({}, {
-    prompt_title = 'Coding agents',
-    finder = finders.new_table({
-      results = entries,
-      entry_maker = function(agent)
-        return { value = agent, display = agent.label, ordinal = agent.name }
-      end,
-    }),
-    sorter = conf.generic_sorter({}),
-    attach_mappings = function(prompt_bufnr)
-      actions.select_default:replace(function()
-        actions.close(prompt_bufnr)
-        local selection = action_state.get_selected_entry()
-        if selection then M.toggle(selection.value.name, context) end
-      end)
-      return true
-    end,
-  }):find()
+	pickers
+		.new({}, {
+			prompt_title = "Coding agents",
+			finder = finders.new_table({
+				results = entries,
+				entry_maker = function(agent)
+					return { value = agent, display = agent.label, ordinal = agent.name }
+				end,
+			}),
+			sorter = conf.generic_sorter({}),
+			attach_mappings = function(prompt_bufnr)
+				actions.select_default:replace(function()
+					actions.close(prompt_bufnr)
+					local selection = action_state.get_selected_entry()
+					if selection then
+						M.toggle(selection.value.name, context)
+					end
+				end)
+				return true
+			end,
+		})
+		:find()
 end
 
 -- 测试辅助：替换可执行文件探测函数。参数 fn：接收入参名、返回 0/1/路径/布尔的函数。无返回值。
 function M._set_executable(fn)
-  executable_lookup = fn
+	executable_lookup = fn
 end
 
 function M._set_probe(fn)
-  runnable_probe = fn
+	runnable_probe = fn
 end
 
 -- 测试辅助：把实例表、当前/最近助手与探测函数全部重置为初始状态。无参数、无返回值。
 function M._reset()
-  instances = {}
-  active_name = nil
-  last_name = nil
-  executable_lookup = vim.fn.executable
-  runnable_probe = default_probe
+	instances = {}
+	active_name = nil
+	last_name = nil
+	executable_lookup = vim.fn.executable
+	runnable_probe = default_probe
 end
 
 return M

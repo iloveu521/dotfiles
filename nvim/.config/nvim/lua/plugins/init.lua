@@ -22,6 +22,7 @@ for _, module in ipairs({
 	"plugins.navigation", -- 检索与侧栏：Telescope、neo-tree、aerial
 	"plugins.editing", -- 编辑增强：gitsigns、自动配对、TODO 检索、会话管理
 	"plugins.treesitter", -- 语法解析：treesitter 解析器与高亮
+	"plugins.xml", -- XML：URDF/Xacro 文件类型与标签自动闭合
 	"plugins.guides", -- 视觉引导：代码块框线、缩进线、彩虹括号
 	"plugins.completion", -- 补全引擎与代码片段
 	"plugins.lsp", -- 语言服务器接入与诊断

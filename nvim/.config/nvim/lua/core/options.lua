@@ -23,6 +23,7 @@ function M.setup()
   opt.mouse = 'a'            -- 所有模式都启用鼠标：点击定位、拖拽选择、滚轮滚动
   opt.clipboard = 'unnamedplus' -- 默认寄存器接管系统剪贴板，y/p 与外部程序直接互通
   opt.undofile = true        -- 撤销历史写到磁盘，重新打开文件后仍可用 u 回退
+  opt.autoread = true        -- 磁盘文件被 Agent 等外部程序修改后，允许自动重新载入未修改的缓冲区
   -- 搜索行为：默认忽略大小写，但输入大写字母时改为精确匹配。
   opt.ignorecase = true      -- 搜索不加区分大小写
   opt.smartcase = true       -- 一旦出现大写字符就区分大小写，覆盖上一条
