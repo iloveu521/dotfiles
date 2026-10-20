@@ -25,19 +25,35 @@ nvf() {
   [[ -n "$file" ]] && nvim "$file"
 }
 
-# git diff 
-diff() {
+# Git diff: bat 语法高亮
+gdiff() {
   git diff --no-color "$@" |
     batcat --language=diff \
            --plain \
            --paging=always
 }
 
-# colcon build 
-cobuild() {
+# ROS 2: colcon build
+rb() {
   colcon build --symlink-install "$@" \
     --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 }
+
+# ROS 2: run
+rr() {
+  ros2 run "$@"
+}
+
+# ROS 2: launch
+rl() {
+  ros2 launch "$@"
+}
+
+# ROS 2: topic
+rt() {
+  ros2 topic "$@"
+}
+
 
 # claude code dangerous mode 
 claude-d() {
