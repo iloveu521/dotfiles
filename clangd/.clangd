@@ -1,0 +1,51 @@
+
+# .clangd
+# C / C++ 通用项目配置
+
+CompileFlags:
+  # 自动搜索 compile_commands.json
+  CompilationDatabase: Ancestors
+
+  # 额外编译警告，不覆盖项目 C/C++ 标准
+  Add:
+    - -Wall
+    - -Wextra
+
+Index:
+  # 后台索引：跨文件跳转、引用查找、代码补全
+  Background: Build
+  StandardLibrary: true
+
+Diagnostics:
+  # clang-tidy 静态检查
+  ClangTidy:
+    Add:
+      - bugprone-*
+      - performance-*
+      - modernize-*
+    Remove:
+      - modernize-use-trailing-return-type
+      - modernize-use-auto
+
+  # 不显示第三方和系统头文件内部的诊断
+  Suppress: []
+
+Completion:
+  # 补全其他命名空间中的符号
+  AllScopes: true
+
+  # 补全函数时添加参数占位符
+  ArgumentLists: FullPlaceholders
+
+  # 自动插入头文件
+  HeaderInsertion: IWYU
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
+  Designators: true
+  BlockEnd: false
+  DefaultArguments: false
+  TypeNameLimit: 32
+
