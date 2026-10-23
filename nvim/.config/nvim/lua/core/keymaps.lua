@@ -158,8 +158,14 @@ function M.setup()
   map('n', '<Right>', '<Cmd>vertical resize +2<CR>', { silent = true, desc = 'Increase window width' })
 
   -- 编辑辅助：快速退出插入模式；缩进后保留选择；粘贴时不覆盖复制寄存器。
+  -- <S-CR>：insert 模式；在当前行下方新开一行，并留在插入模式。
+  map('i', '<S-CR>', '<C-o>o', { silent = true, desc = 'Insert line below' })
+  -- <C-S-CR>：insert 模式；在当前行上方新开一行，并留在插入模式。
+  map('i', '<C-S-CR>', '<C-o>O', { silent = true, desc = 'Insert line above' })
   -- x：normal 模式；删除单个字符时写入黑洞寄存器，避免覆盖刚复制的内容。
   map('n', 'x', '"_x', { silent = true, desc = 'Delete character without yanking' })
+  -- c：visual 模式；替换选区时写入黑洞寄存器，保留其他寄存器中的内容。
+  map('x', 'c', '"_c', { silent = true, desc = 'Change selection without yanking' })
   -- jk：insert 模式；连按两键退出插入，比伸手按 <Esc> 省力，正常打字节奏几乎不会误触。
   map('i', 'jk', '<Esc>', { silent = true, desc = 'Leave insert mode' })
   -- <：visual 模式；左缩进一级后用 gv 重新选中，可以连续按。

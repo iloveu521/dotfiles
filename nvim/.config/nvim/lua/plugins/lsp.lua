@@ -10,7 +10,7 @@
   加载时机：
     * nvim-lspconfig 在读取缓冲区时加载（BufReadPre / BufNewFile），保证一打开文件就能挂上服务器；
     * 下面 keys 中声明的映射是「全局懒加载键」，即使还没打开文件也能按，按键时才加载插件。
-  本文件启用的服务器：clangd（C/C++/CUDA）、lua_ls、basedpyright、ruff、lemminx（XML/URDF/Xacro）。
+  本文件启用的服务器：clangd（C/C++/CUDA）、cmake、lua_ls、basedpyright、ruff、lemminx（XML/URDF/Xacro）。
 ]]
 
 -- 语言服务器挂载到缓冲区后（LspAttach）注册的缓冲区级映射。
@@ -46,6 +46,8 @@ return {
       --   basedpyright        —— Python 类型检查/补全
       --   ruff                —— Python 代码检查与格式化
       --   lemminx             —— XML 语言服务器（URDF/Xacro）
+      --   cmake-language-server —— CMakeLists.txt 补全与诊断
+      --   cmakelang           —— CMake 格式化器（cmake-format）
       --   tree-sitter-cli     —— nvim-treesitter main 分支编译 parser 所需工具
       ensure_installed = {
         'lua-language-server',
@@ -54,6 +56,8 @@ return {
         'basedpyright',
         'ruff',
         'lemminx',
+        'cmake-language-server',
+        'cmakelang',
         'tree-sitter-cli',
       },
       -- 每次启动都检查一次，保证换机器/重装后能自动补齐。
@@ -130,8 +134,15 @@ return {
         capabilities = capabilities,
         filetypes = { 'xml' },
       })
+      -- cmake：CMakeLists.txt 与 .cmake 文件的补全和诊断。
+      vim.lsp.config('cmake', {
+        capabilities = capabilities,
+        filetypes = { 'cmake' },
+        root_markers = { 'CMakePresets.json', 'CTestConfig.cmake', '.git', 'build', 'cmake' },
+        init_options = { buildDirectory = 'build' },
+      })
       -- 启用上面配置好的服务器；lspconfig 会在匹配的文件类型上自动挂载。
-      vim.lsp.enable({ 'clangd', 'lua_ls', 'basedpyright', 'ruff', 'lemminx' })
+      vim.lsp.enable({ 'clangd', 'cmake', 'lua_ls', 'basedpyright', 'ruff', 'lemminx' })
 
       -- 服务器挂载后注册缓冲区级映射（gd / gD / gr / K / <leader>ca / <leader>cr）。
       vim.api.nvim_create_autocmd('LspAttach', { callback = lsp_mappings })

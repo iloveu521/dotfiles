@@ -6,7 +6,7 @@
     * 也支持手动格式化：<leader>cf 与 <M-f>。
 
   加载时机：BufWritePre（保存前）触发，或按下相关按键 / 执行 :ConformInfo 时加载。
-  格式化器由 mason-tool-installer 保证存在（stylua、ruff 等），clang-format / cmake-format 由系统提供。
+  格式化器由 mason-tool-installer 保证存在（stylua、ruff、cmake-format 等），clang-format 由系统提供。
 ]]
 
 return {
