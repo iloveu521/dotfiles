@@ -18,12 +18,16 @@
 -- 也因此只有真正支持 LSP 的文件才会有这些按键（见文件末尾的 LspAttach 回调）。
 local function lsp_mappings(event)
   local opts = { buffer = event.buf }
+  -- `gr` 是 Neovim 默认 `gr*` LSP 映射的前缀；缓冲区级 <Nop> 遮住它们，避免引用跳转等待 timeoutlen。
+  for _, key in ipairs({ 'gra', 'grn', 'grr', 'gri', 'grt', 'grx' }) do
+    vim.keymap.set('n', key, '<Nop>', vim.tbl_extend('force', opts, { desc = 'Disabled duplicate LSP mapping' }))
+  end
   -- gd：跳到定义（最常用的跳转）
   vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = 'Go to definition' }))
   -- gD：跳到声明（声明与定义分离的语言，如 C/C++ 头文件）
   vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, vim.tbl_extend('force', opts, { desc = 'Go to declaration' }))
   -- gr：列出所有引用（配合 telescope 选择跳转）
-  vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = 'References' }))
+  vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = 'References', nowait = true }))
   -- K：悬浮显示类型与文档（Vim 原生 K 是查 man，这里改为 LSP 语义）
   vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = 'Hover documentation' }))
   -- <leader>ca：代码操作，包括快速修复、自动导入、提取变量等
@@ -74,7 +78,6 @@ return {
     dependencies = { 'saghen/blink.cmp' },
     keys = {
       -- 全局懒加载键：还没打开任何文件也能直接按，顺带把插件加载起来。
-      { '<M-d>', vim.lsp.buf.definition, desc = 'Go to definition' },
       {
         '<M-s>',
         -- 在 telescope 里预览定义位置而不直接跳走（jump_type = 'never'），

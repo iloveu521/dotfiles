@@ -31,7 +31,6 @@ return {
     'mfussenegger/nvim-dap',
     keys = {
       -- 中断/继续：没有会话时启动 launch 配置，停在断点后则是继续运行（<F5> 同义，照顾 IDE 习惯）
-      { '<leader>dc', function() require('dap').continue() end, desc = 'Debug continue' },
       -- 在当前行切换断点，调试中最常用的操作
       { '<leader>db', function() require('dap').toggle_breakpoint() end, desc = 'Toggle breakpoint' },
       -- attach 到已在运行的进程：pick_process() 列出系统进程让用户选 pid，

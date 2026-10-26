@@ -53,13 +53,11 @@ return {
       { '<leader>fg', project_picker('live_grep'), desc = 'Grep project' },
       -- 空格 f r（普通模式）：最近打开过的文件；only_cwd 只保留项目根之下的条目
       { '<leader>fr', project_picker('oldfiles', { only_cwd = true }), desc = 'Recent project files' },
-      -- 空格 f b（普通模式）：查找全部已列出的缓冲区；sort_mru 按最近使用排序，当前缓冲区也保留
-      { '<leader>fb', '<Cmd>Telescope buffers sort_mru=true<CR>', desc = 'Find buffers' },
       -- 空格 f h（普通模式）：检索帮助标签，用来按关键词找 :help 主题
       { '<leader>fh', '<Cmd>Telescope help_tags<CR>', desc = 'Help tags' },
       -- 空格 f c（普通模式）：列出所有可用命令（含用户自定义命令）
       { '<leader>fc', '<Cmd>Telescope commands<CR>', desc = 'Commands' },
-      -- 空格 b b（普通模式）：与 f b 同功能的另一组映射，贴合“切换缓冲区”的习惯
+      -- 空格 b b（普通模式）：切换缓冲区，按最近使用排序。
       { '<leader>bb', '<Cmd>Telescope buffers sort_mru=true<CR>', desc = 'Switch buffer' },
     },
     opts = {
@@ -73,8 +71,7 @@ return {
         -- 输入框放在顶部（配合 ascending 才是“上输入、下结果”）；
         -- 宽度 0.9、高度 0.85 保留背景上下文，同时给结果留足空间。
         layout_config = { prompt_position = 'top', width = 0.9, height = 0.85 },
-        -- Telescope 的 prompt 会安装局部映射，因此需要在这里显式接入全局 Alt 方向键体系：
-        -- I/K 选择上一项/下一项，J/L 向上/向下滚动右侧只读预览。
+        -- Telescope prompt 的局部映射：Alt+I/K 选择上一项/下一项，Alt+J/L 滚动预览。
         mappings = {
           i = {
             ['<M-i>'] = function(prompt_bufnr)

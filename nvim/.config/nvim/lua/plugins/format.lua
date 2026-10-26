@@ -3,7 +3,7 @@
 
   行为：
     * 保存文件时按文件类型自动格式化（可通过 <leader>uf 逐缓冲区关闭）；
-    * 也支持手动格式化：<leader>cf 与 <M-f>。
+    * 也支持手动格式化：<M-f>。
 
   加载时机：BufWritePre（保存前）触发，或按下相关按键 / 执行 :ConformInfo 时加载。
   格式化器由 mason-tool-installer 保证存在（stylua、ruff、cmake-format 等），clang-format 由系统提供。
@@ -17,15 +17,8 @@ return {
     cmd = { 'ConformInfo' },
     keys = {
       {
-        '<leader>cf',
-        -- 立即异步格式化当前缓冲区；没有专用格式化器时回退到 LSP 格式化（lsp_format = 'fallback'）。
-        function() require('conform').format({ async = true, lsp_format = 'fallback' }) end,
-        mode = { 'n', 'v' },
-        desc = 'Format code',
-      },
-      {
         '<M-f>',
-        -- 与 <leader>cf 等价，但额外支持插入模式（写完立刻格式化再继续输入）。
+        -- 插入模式也可格式化；执行后继续输入。
         function() require('conform').format({ async = true, lsp_format = 'fallback' }) end,
         mode = { 'n', 'v', 'i' },
         desc = 'Format code',

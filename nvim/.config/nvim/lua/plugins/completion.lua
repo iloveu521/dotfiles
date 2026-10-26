@@ -6,8 +6,7 @@
     * blink.cmp        —— 补全引擎，模糊匹配由 Rust 实现，输入延迟低。
 
   加载时机：进入插入模式时才加载（event = 'InsertEnter'），不拖慢启动。
-  按键：预设 'enter'（回车接受补全），并额外把 Alt+I / Alt+K 接到「选择上一项 / 下一项」，
-        与 core/keymaps.lua 的 Alt 方向键体系统一。
+  按键：预设 'enter'（回车接受补全），并把 Alt+I / Alt+K 用于补全菜单中的上一项 / 下一项。
 ]]
 
 return {
@@ -27,8 +26,7 @@ return {
         -- 'enter' 预设提供：回车接受、C-space 显示菜单、C-e 取消并隐藏、
         -- Tab/S-Tab 跳转片段占位符、C-n/C-p 与 Up/Down 选择、C-b/C-f 滚动文档、C-k 显示签名。
         preset = 'enter',
-        -- 复用 Alt 方向键：菜单打开时选择上一项/下一项；
-        -- fallback_to_mappings 保证菜单未打开时回退到 core/keymaps.lua 的光标移动映射。
+        -- 菜单打开时用 Alt+I/K 选择上一项/下一项；菜单不处理时交回 Neovim 的其它映射。
         ['<M-i>'] = { 'select_prev', 'fallback_to_mappings' },
         ['<M-k>'] = { 'select_next', 'fallback_to_mappings' },
       },
