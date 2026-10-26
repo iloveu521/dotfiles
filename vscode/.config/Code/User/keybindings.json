@@ -1,34 +1,14 @@
 // 将键绑定放在此文件中以覆盖默认值
 [
 	{
-		"key": "ctrl+enter",
+		"key": "shift+enter",
 		"command": "editor.action.insertLineAfter",
-		"when": "editorTextFocus"
+		"when": "editorTextFocus && vim.mode == 'Insert'"
 	},
 	{
-		"key": "ctrl+d",
-		"command": "editor.action.copyLinesDownAction",
-		"when": "editorTextFocus"
-	},
-	{
-		"key": "alt+k",
-		"command": "cursorDown",
-		"when": "textInputFocus"
-	},
-	{
-		"key": "alt+i",
-		"command": "cursorUp",
-		"when": "textInputFocus"
-	},
-	{
-		"key": "alt+j",
-		"command": "cursorLeft",
-		"when": "textInputFocus",
-	},
-	{
-		"key": "alt+l",	
-		"command": "cursorRight",
-		"when": "textInputFocus"
+		"key": "ctrl+shift+enter",
+		"command": "editor.action.insertLineBefore",
+		"when": "editorTextFocus && vim.mode == 'Insert'"
 	},
 	{
 		"key": "alt+f",
@@ -36,15 +16,57 @@
 		"when": "editorHasDocumentFormattingProvider && editorTextFocus && !editorReadonly"
 	},
 	{
-        "key": "alt+i",
-        "command": "selectPrevSuggestion",
-        "when": "suggestWidgetVisible"
-    },
-    {
-        "key": "alt+k",
-        "command": "selectNextSuggestion",
-        "when": "suggestWidgetVisible"
-    },
+		"key": "alt+i",
+		"command": "selectPrevSuggestion",
+		"when": "suggestWidgetVisible"
+	},
+	{
+		"key": "alt+k",
+		"command": "selectNextSuggestion",
+		"when": "suggestWidgetVisible"
+	},
+	{
+		"key": "alt+i",
+		"command": "workbench.action.quickOpenNavigatePrevious",
+		"when": "inQuickOpen"
+	},
+	{
+		"key": "alt+k",
+		"command": "workbench.action.quickOpenNavigateNext",
+		"when": "inQuickOpen"
+	},
+	{
+		"key": "alt+i",
+		"command": "list.focusUp",
+		"when": "listFocus && !inputFocus"
+	},
+	{
+		"key": "alt+k",
+		"command": "list.focusDown",
+		"when": "listFocus && !inputFocus"
+	},
+	{
+		"key": "alt+i",
+		"command": "workbench.action.terminal.sendSequence",
+		"args": { "text": "\u001b[A" },
+		"when": "terminalFocus"
+	},
+	{
+		"key": "alt+k",
+		"command": "workbench.action.terminal.sendSequence",
+		"args": { "text": "\u001b[B" },
+		"when": "terminalFocus"
+	},
+	{
+		"key": "alt+i",
+		"command": "cursorUp",
+		"when": "textInputFocus && !suggestWidgetVisible && !inQuickOpen && !terminalFocus"
+	},
+	{
+		"key": "alt+k",
+		"command": "cursorDown",
+		"when": "textInputFocus && !suggestWidgetVisible && !inQuickOpen && !terminalFocus"
+	},
 	{
 		"key": "alt+u",
 		"command": "cursorLineStart",
@@ -56,63 +78,56 @@
 		"when": "textInputFocus"
 	},
 	{
-		"key": "alt+a",
-		"command": "editor.action.deleteLines",
+		"key": "alt+p",
+		"command": "editor.action.selectHighlights",
+		"when": "editorTextFocus && vim.mode == 'Insert'"
+	},
+	{
+		"key": "alt+shift+j",
+		"command": "cursorWordLeft",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+shift+l",
+		"command": "cursorWordRight",
+		"when": "textInputFocus"
+	},
+	{
+		"key": "alt+e",
+		"command": "workbench.action.focusFirstEditorGroup",
 		"when": "editorTextFocus"
 	},
 	{
-		"key": "alt+p",
-		"command": "editor.action.addSelectionToNextFindMatch",
-		"when": "editorFocus"
+		"key": "alt+b",
+		"command": "workbench.action.navigateBack",
+		"when": "editorTextFocus && vim.mode == 'Normal'"
 	},
 	{
-			"key": "alt+shift+i",
-			"command": "editor.action.selectHighlights",
-			"when": "editorTextFocus"
+		"key": "alt+a",
+		"command": "workbench.action.navigateForward",
+		"when": "editorTextFocus && vim.mode == 'Normal'"
 	},
 	{
-			"key": "alt+shift+J",
-			"command": "cursorWordLeft"
+		"key": "alt+s",
+		"command": "editor.action.peekDefinition",
+		"when": "editorTextFocus"
 	},
 	{
-			"key": "alt+shift+l",
-			"command": "cursorWordRight"
+		"key": "alt+r",
+		"command": "vim.remap",
+		"when": "editorTextFocus && vim.mode == 'Normal'",
+		"args": {
+			"after": [":", "%", "s", "/", "\\", "C", "\\", "<", "<C-r>", "<C-w>", "\\", ">", "/", "/", "g", "c", "<Left>", "<Left>", "<Left>"]
+		}
 	},
 	{
-			"key": "ctrl+shift+j",
-			"command": "cursorWordLeftSelect"
+		"key": "ctrl+p",
+		"command": "workbench.action.quickOpen",
+		"when": "editorTextFocus && vim.mode == 'Normal'"
 	},
 	{
-			"key": "ctrl+shift+l",
-			"command": "cursorWordRightSelect"
-	},
-	{
-			"key": "ctrl+shift+i",
-			"command": "cursorUpSelect"
-	},
-	{
-			"key": "ctrl+shift+k",
-			"command": "cursorDownSelect"
-	},
-	{
-			"key": "alt+e",
-			"command": "workbench.action.focusFirstEditorGroup"
-	},
-	{
-			"key": "alt+b",
-			"command": "workbench.action.navigateBack"
-	},
-	{
-			"key": "alt+d",
-			"command": "editor.action.revealDefinition"
-	},
-	{
-			"key": "alt+s",
-			"command": "editor.action.peekDefinition"
-	},
-	{
-			"key": "ctrl+n",
-			"command": "create.new"
+		"key": "ctrl+n",
+		"command": "create.new"
 	},
 	{
 		"key": "ctrl+c",
@@ -127,19 +142,19 @@
 	{
 		"key": "alt+j",
 		"command": "workbench.action.terminal.sendSequence",
-		"args": { "text": "\u001b[D" }, // 左箭头
+		"args": { "text": "\u001b[D" },
 		"when": "terminalFocus"
 	},
 	{
 		"key": "alt+l",
 		"command": "workbench.action.terminal.sendSequence",
-		"args": { "text": "\u001b[C" }, // 右箭头
+		"args": { "text": "\u001b[C" },
 		"when": "terminalFocus"
 	},
 	{
 		"key": "ctrl+shift+c",
 		"command": "workbench.action.terminal.sendSequence",
-		"args": { "text": "\u0003" }, // Ctrl+C 的控制序列
+		"args": { "text": "\u0003" },
 		"when": "terminalFocus"
 	}
 ]
